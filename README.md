@@ -153,7 +153,29 @@ The floating menu bar card provides complete visibility and control over your ex
 
 ## Installation & First-Time Launch
 
-### Option A: Pre-Built Standalone Release (Recommended)
+### Option A: Via Homebrew (Recommended)
+
+Install the macOS Universal app directly using [Homebrew](https://brew.sh/):
+
+```bash
+brew install --cask siraj-bd/tap/safe-drive-ejector
+```
+
+Or add the tap first and install:
+
+```bash
+brew tap siraj-bd/tap
+brew install --cask safe-drive-ejector
+```
+
+To update in the future:
+```bash
+brew upgrade --cask safe-drive-ejector
+```
+
+---
+
+### Option B: Pre-Built Standalone Release (DMG)
 
 Download the latest package from [GitHub Releases](https://github.com/siraj-bd/Safe-Drive-Ejector-macOS/releases):
 - **macOS Universal (Apple Silicon M1/M2/M3/M4 & Intel)**: `SafeDriveEjector-1.0.0-macOS-Universal.dmg`
