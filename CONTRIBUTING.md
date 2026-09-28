@@ -60,7 +60,7 @@ Feature suggestions are welcome! Please open an issue outlining:
 - Do not add heavy external dependencies unless strictly necessary (keep core lightweight with zero required pip installs).
 
 ### Swift Guidelines
-- Ensure compatibility with macOS 12+ (Monterey, Ventura, Sonoma, Sequoia).
+- Ensure compatibility with macOS 12.0+ (Monterey, Ventura, Sonoma, Sequoia, Golden Gate & all modern versions).
 - Maintain efficient ARC memory management and clean async/main thread UI dispatching.
 
 ---

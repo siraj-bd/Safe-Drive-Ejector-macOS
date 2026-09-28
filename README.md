@@ -100,7 +100,7 @@ Operating seamlessly from your macOS Menu Bar, it works automatically in the bac
 
 | Operating System | Menu Bar App | CLI / Background Daemon | Smart App Shutdown | Auto Sleep / Wake | Architecture |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **macOS 12+ (Monterey, Ventura, Sonoma, Sequoia)** | :white_check_mark: Native Swift | :white_check_mark: Python 3 | :white_check_mark: AppleScript + POSIX | :white_check_mark: Full Support | Universal 2 (Apple Silicon & Intel) |
+| **macOS 12.0+ (Monterey, Ventura, Sonoma, Sequoia, Golden Gate & all modern versions)** | :white_check_mark: Native Swift | :white_check_mark: Python 3 | :white_check_mark: AppleScript + POSIX | :white_check_mark: Full Support | Universal 2 (Apple Silicon & Intel) |
 
 ---
 
