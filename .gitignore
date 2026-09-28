@@ -1,0 +1,76 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+*.spec
+MANIFEST
+
+# Swift & Xcode Build Artifacts
+.build/
+.swiftpm/
+.module-cache/
+xcuserdata/
+DerivedData/
+*.swiftdoc
+*.swiftmodule
+*.swiftsourceinfo
+*.dSYM/
+
+# Binaries (Local builds)
+/main
+bin/SafeEjectMenuBar
+bin/*.o
+bin/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+.tmp_home/
+.tmp_config/
+.safe_eject_config/
+
+# Testing & Cache
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Logs & Temporary Files
+*.log
+/tmp/
+scratch/
+
+# Internal Tracking & Documentation (Local Only)
+project-execution-status.md
+project-status-for-chatgpt.html
+

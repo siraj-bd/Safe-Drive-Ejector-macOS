@@ -1,0 +1,233 @@
+name: macOS Universal Release (arm64 + x86_64)
+
+'on':
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: 'Publish as GitHub Release draft/tag'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  # ============================================================================
+  # 1. Automated Test Suite (macOS Apple Silicon & Intel)
+  # ============================================================================
+  test:
+    name: Run Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    env:
+      PYTHONIOENCODING: utf-8
+      PYTHONUTF8: '1'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, macos-15-intel]
+        python-version: ['3.11']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run Core & Feature Unit Tests
+        run: |
+          python -m unittest discover -s tests -p "test_*.py"
+
+      - name: Run Deep Sleep Isolation Tests
+        run: |
+          python -m unittest tests.test_deep_sleep_auto_wake_isolation
+
+  # ============================================================================
+  # 2. Build macOS Slices (arm64 & x86_64)
+  # ============================================================================
+  build-macos-slices:
+    name: Build macOS Slice (${{ matrix.arch }})
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            arch: arm64
+          - os: macos-15-intel
+            arch: x86_64
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install packaging dependencies
+        run: |
+          python -m pip install --upgrade pip pyinstaller
+
+      - name: Compile Native Slice (${{ matrix.arch }})
+        run: |
+          chmod +x build_macos.sh
+          ./build_macos.sh --slice ${{ matrix.arch }}
+
+      - name: Upload Architecture Slice Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-slice-${{ matrix.arch }}
+          path: .build/slices/${{ matrix.arch }}
+          if-no-files-found: error
+
+  # ============================================================================
+  # 3. Package Universal 2 macOS Bundle & DMG (arm64 + x86_64)
+  # ============================================================================
+  package-macos-universal:
+    name: Package macOS Universal (arm64 + x86_64)
+    needs: build-macos-slices
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download arm64 Slice Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-slice-arm64
+          path: .build/slices/arm64
+
+      - name: Download x86_64 Slice Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-slice-x86_64
+          path: .build/slices/x86_64
+
+      - name: Verify Slices Integrity
+        run: |
+          ls -la .build/slices/arm64
+          ls -la .build/slices/x86_64
+          file .build/slices/arm64/SafeEjectMenuBar .build/slices/arm64/safeeject_core
+          file .build/slices/x86_64/SafeEjectMenuBar .build/slices/x86_64/safeeject_core
+
+      - name: Set up Apple Developer ID Keychain (if configured)
+        if: env.APPLE_CERTIFICATE_BASE64 != ''
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD || 'build-keychain-pass' }}
+        run: |
+          echo "Setting up temporary build keychain..."
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          CERT_PATH="$RUNNER_TEMP/certificate.p12"
+          echo -n "$APPLE_CERTIFICATE_BASE64" | base64 --decode -o "$CERT_PATH"
+          security import "$CERT_PATH" -k "$KEYCHAIN_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+
+          echo "Certificates available in keychain:"
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+
+      - name: Merge Universal Binaries, Sign and Build DMG
+        env:
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [ -z "$VERSION" ] || [ "$VERSION" = "main" ]; then
+            VERSION="1.1.2"
+          fi
+          export DMG_NAME="SafeDriveEjector-${VERSION}-macOS-Universal.dmg"
+          if [ -n "$APPLE_API_KEY_BASE64" ] && [ -n "$APPLE_API_KEY_ID" ]; then
+            mkdir -p "$RUNNER_TEMP/private_keys"
+            echo -n "$APPLE_API_KEY_BASE64" | base64 --decode > "$RUNNER_TEMP/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8"
+            export APPLE_API_KEY_PATH="$RUNNER_TEMP/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8"
+          fi
+          chmod +x build_macos.sh
+          ./build_macos.sh --universal
+
+      - name: Verify Universal 2 Binary & Signature Standards
+        run: |
+          echo "=== 1. Checking Mach-O Fat Headers ==="
+          lipo -info "dist/Safe Drive Ejector.app/Contents/MacOS/SafeEjectMenuBar" | grep -q "x86_64"
+          lipo -info "dist/Safe Drive Ejector.app/Contents/MacOS/SafeEjectMenuBar" | grep -q "arm64"
+          lipo -info "dist/Safe Drive Ejector.app/Contents/MacOS/safeeject_core" | grep -q "x86_64"
+          lipo -info "dist/Safe Drive Ejector.app/Contents/MacOS/safeeject_core" | grep -q "arm64"
+          echo "=== 2. Strict Codesign Verification ==="
+          codesign --verify --deep --strict "dist/Safe Drive Ejector.app"
+          echo "=== 3. DMG Verification ==="
+          test -f dist/*.dmg
+
+      - name: Clean up Apple Developer ID Keychain
+        if: always()
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain"
+          if [ -f "$KEYCHAIN_PATH" ]; then
+            security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
+          fi
+          rm -rf "$RUNNER_TEMP/certificate.p12" "$RUNNER_TEMP/private_keys" 2>/dev/null || true
+
+      - name: Upload Universal macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SafeDriveEjector-macOS-Universal
+          path: dist/*.dmg
+          if-no-files-found: error
+
+  # ============================================================================
+  # 4. Publish Release to GitHub Releases (macOS Universal DMG)
+  # ============================================================================
+  publish-release:
+    name: Publish Release Assets
+    needs: package-macos-universal
+    if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish_release == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download macOS DMG artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: SafeDriveEjector-macOS-Universal
+          path: release-artifacts
+
+      - name: List downloaded release assets
+        run: |
+          ls -lh release-artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-artifacts/*.dmg
+          generate_release_notes: true
+          draft: false
+          prerelease: false

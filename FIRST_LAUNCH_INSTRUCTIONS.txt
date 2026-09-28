@@ -1,0 +1,72 @@
+=============================================================================
+Safe Drive Ejector Tool — First Launch Guide (Free GitHub Release)
+=============================================================================
+
+Safe Drive Ejector Tool is a 100% free, community-driven open-source project
+designed to solve the notorious "Disk Not Ejected Properly" problem on macOS.
+It protects external SSDs/HDDs from data corruption by gracefully closing
+blocking applications and safely unmounting disks before system sleep, then
+re-mounting them automatically upon wake.
+
+Because it is distributed directly via GitHub Releases without a paid $99/year
+Apple Developer subscription, macOS Gatekeeper may display a standard initial
+verification alert on first run.
+
+This is completely normal for community open-source software. You DO NOT need
+to disable System Integrity Protection (SIP), turn off Gatekeeper globally, or
+compromise your operating system's security in any way.
+
+=============================================================================
+🍎 macOS (Apple Silicon arm64 & Intel x86_64)
+=============================================================================
+
+On first launch, macOS Gatekeeper may display:
+    "Safe Drive Ejector" Not Opened
+    Apple could not verify "Safe Drive Ejector" is free of malware that may
+    harm your Mac or compromise your privacy.
+
+TO OPEN THE APPLICATION (Choose either Method 1 or Method 2):
+
+-----------------------------------------------------------------------------
+Method 1: Standard macOS Security Settings (GUI — Recommended)
+-----------------------------------------------------------------------------
+1. Drag "Safe Drive Ejector.app" into your "Applications" folder.
+2. Double-click "Safe Drive Ejector.app".
+3. When the alert appears, click "Done" (or "Cancel").
+4. Open System Settings ( Apple Menu > System Settings).
+5. Go to "Privacy & Security" and scroll down to the "Security" section.
+6. Look for the message:
+   '"Safe Drive Ejector" was blocked to protect your Mac.'
+7. Click the "Open Anyway" button next to it.
+8. Enter your Mac login password or use Touch ID, then click "Open".
+
+* You only need to perform this approval ONCE.
+* Subsequent launches will start automatically from your Menu Bar and at login.
+
+-----------------------------------------------------------------------------
+Method 2: One-Line Terminal Command (Fastest for Power Users)
+-----------------------------------------------------------------------------
+If you prefer using Terminal, simply clear the macOS browser quarantine flag:
+
+    xattr -d com.apple.quarantine "/Applications/Safe Drive Ejector.app"
+
+Then open the application normally from Finder, Launchpad, or Spotlight.
+
+=============================================================================
+💡 Quick Usage Tips & Preventing "Disk Not Ejected Properly"
+=============================================================================
+* Menu Bar Access: Click the Red Diamond icon in your top macOS Menu Bar.
+* 10-Drive Grid: Check your desired drive slot(s) or use {ALL} for all drives.
+* Batch Actions: Click [Mount] (green), [Unmount] (red), or [Finder] (blue).
+* Smart Graceful App Shutdown: Automatically closes running apps and open files
+  locking your external drives before unmount or sleep, preventing app crashes.
+* Prevent "Disk Not Ejected Properly": Keep "Before Sleep" enabled. When your
+  laptop lid closes or goes to sleep, Safe Drive Ejector Tool cleanly flushes
+  and unmounts your drives, eliminating macOS disconnection warnings and data loss.
+* Hardware Deep Sleep: Puts your external disk into total hardware silence with
+  LEDs turned OFF and zero background polling.
+
+=============================================================================
+Official Repository: https://github.com/siraj-bd/Safe-Drive-Ejector-macOS
+License: MIT License (Open Source)
+=============================================================================

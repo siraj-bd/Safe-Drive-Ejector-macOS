@@ -1,0 +1,2500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Safe Drive Ejector Tool</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      user-select: none;
+    }
+
+    /* ==========================================================================
+       MAIN CARD CONTAINER (Exact from Uiverse.io by dzoshi / fast-rabbit-51)
+       ========================================================================== */
+    .card {
+      position: relative;
+      width: 190px;
+      min-height: 316px;
+      background: linear-gradient(-45deg, #161616 0%, #000000 100%);
+      color: #81818144;
+      display: flex;
+      flex-direction: column;
+      padding: 6px 6px;
+      gap: 2.5px;
+      border-radius: 8px;
+      cursor: pointer;
+      box-sizing: border-box;
+      margin: auto;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      left: 0;
+      right: 0;
+      margin: auto;
+      width: 100%;
+      height: calc(100% + 6px);
+      border-radius: 10px;
+      background: linear-gradient(-45deg, #ff0000 0%, #d80000 40%);
+      z-index: -10;
+      pointer-events: none;
+      transition: all 0.8s cubic-bezier(0.175, 0.95, 0.9, 1.275);
+      box-shadow: none;
+    }
+
+    .card::after {
+      content: "";
+      z-index: -1;
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      width: calc(100% - 25px);
+      height: calc(100% - 9px);
+      border-radius: 8px;
+      background: linear-gradient(-45deg, #fc0000 0%, #f00000 100%);
+      transform: translate3d(0, 0, 0) scale(0.45);
+      pointer-events: none;
+    }
+
+    .card:hover::after {
+      transition: all 0.2s cubic-bezier(0.175, 0.285, 0.82, 1.275);
+    }
+
+    .card:hover::before {
+      transform: scaleX(1.02) scaleY(1.02);
+      box-shadow: none;
+    }
+
+    /* Contained water-colour / blur background layer strictly inside & behind card content */
+    .card-watercolor-bg {
+      position: absolute;
+      inset: 2px;
+      border-radius: 8px;
+      background: radial-gradient(circle at 50% 15%, rgba(255, 59, 48, 0.12), rgba(86, 40, 238, 0.08) 50%, rgba(18, 18, 19, 0.75) 100%);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      pointer-events: none;
+      z-index: 0;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover .card-watercolor-bg {
+      background: radial-gradient(circle at 50% 25%, rgba(255, 59, 48, 0.18), rgba(86, 40, 238, 0.12) 60%, rgba(18, 18, 19, 0.85) 100%);
+    }
+
+    .github-header-btn,
+    .status-container,
+    .drivers-section,
+    .grid-section,
+    .footer-brand {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ==========================================================================
+       HEADER: GITHUB UI (unlucky-rattlesnake-65 by elijahgummer)
+       Text center-justified in the middle!
+       ========================================================================== */
+    @keyframes rainbowGlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .github-header-btn {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      height: 22px;
+      padding: 0 4px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      background: linear-gradient(#121213, #121213) padding-box,
+                  linear-gradient(90deg, #ff3b30, #ff9500, #ffcc00, #34c759, #007aff, #af52de, #ff2d55) border-box;
+      background-size: 200% 200%;
+      animation: rainbowGlow 4s linear infinite;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Rainbow bottom glow */
+    .github-header-btn::after {
+      content: "";
+      position: absolute;
+      bottom: -2.5px;
+      left: 10%;
+      width: 80%;
+      height: 4px;
+      background: linear-gradient(90deg, #ff3b30, #ff9500, #34c759, #007aff, #af52de);
+      background-size: 200% 200%;
+      animation: rainbowGlow 4s linear infinite;
+      filter: blur(3px);
+      opacity: 0.7;
+      z-index: -1;
+    }
+
+    .gh-left-clickable {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      flex-shrink: 0;
+    }
+    .gh-left-clickable:hover {
+      opacity: 0.85;
+      transform: scale(1.08);
+    }
+
+    .gh-icon-svg {
+      width: 11px;
+      height: 11px;
+      fill: #ffffff;
+    }
+
+    /* Center-justified title */
+    .gh-center-title {
+      flex: 1;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 7.2px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.15px;
+      white-space: nowrap;
+      padding: 0 2px;
+    }
+
+    .gh-star-clickable {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 1px 3px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    .gh-star-clickable:hover {
+      background: rgba(255, 255, 255, 0.18);
+      transform: scale(1.05);
+    }
+
+    .gh-star-icon {
+      width: 8.5px;
+      height: 8.5px;
+      fill: #a0a6b2;
+      transition: fill 0.2s ease, transform 0.2s ease;
+    }
+    .gh-star-clickable:hover .gh-star-icon,
+    .gh-star-clickable.starred .gh-star-icon {
+      fill: #ffcc00;
+      filter: drop-shadow(0 0 3px rgba(255, 204, 0, 0.8));
+    }
+
+    .gh-star-count {
+      font-size: 7px;
+      font-weight: 800;
+      color: #ffffff;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ==========================================================================
+       STATUS SECTION (From User Reference: 3-line layout with Red SSD + ⏳)
+       ========================================================================== */
+    .status-container {
+      background: rgba(18, 18, 22, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 4px;
+      padding: 3.5px 6px 4px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      width: 100%;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    /* Pager Zone: Positioned on the left of Status title, shifted slightly down */
+    .status-pager-zone {
+      position: absolute;
+      left: 8px;
+      top: calc(50% + 1.5px);
+      transform: translateY(-50%);
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 60;
+    }
+
+    /* Top Bar: Status Title centered with Size Scale Selector on right */
+    .status-top-bar {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      width: 100%;
+    }
+
+    .status-title {
+      font-size: 8px;
+      font-weight: 700;
+      color: #ffffff;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      letter-spacing: 0.2px;
+      line-height: 1;
+      text-align: center;
+    }
+
+    .status-size-wrap {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      justify-self: end;
+    }
+
+    .size-label {
+      font-size: 6.2px;
+      color: rgba(255, 255, 255, 0.6);
+      font-weight: 600;
+    }
+
+    .size-select {
+      width: 28px;
+      height: 12px;
+      font-size: 6.5px;
+      font-weight: 700;
+      padding: 0;
+      background: #0f0f11;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+      color: #ff3333;
+      cursor: pointer;
+      outline: none;
+      text-align: center;
+      line-height: 12px;
+    }
+    .size-select:hover, .size-select:focus {
+      border-color: #ff3333;
+      box-shadow: 0 0 4px rgba(255, 51, 51, 0.4);
+    }
+
+    /* Bottom Row: Animated Icon on Left, Two Text lines on Right (Hidden by default, active on unmount/eject) */
+    .status-body-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      width: 100%;
+      max-width: 100%;
+      min-height: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .status-body-row.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .status-loader-wrap {
+      width: 14px;
+      height: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .loader-scaler {
+      transform: scale(0.26);
+      transform-origin: center center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 0 2px rgba(255, 25, 25, 0.6));
+    }
+
+    .loader {
+      width: 44px;
+      aspect-ratio: 1.154;
+      position: relative;
+      background: conic-gradient(from 120deg at 50% 64%, #0000, #ff1919 1deg 120deg, #0000 121deg);
+      animation: l27-0 1.5s infinite cubic-bezier(0.3, 1, 0, 1);
+    }
+
+    .loader:before,
+    .loader:after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: inherit;
+      transform-origin: 50% 66%;
+      animation: l27-1 1.5s infinite;
+    }
+
+    .loader:after {
+      --s: -1;
+    }
+
+    @keyframes l27-0 {
+      0%, 30% {
+        transform: rotate(0);
+      }
+      70% {
+        transform: rotate(120deg);
+      }
+      70.01%, 100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes l27-1 {
+      0% {
+        transform: rotate(calc(var(--s, 1) * 120deg)) translate(0);
+      }
+      30%, 70% {
+        transform: rotate(calc(var(--s, 1) * 120deg)) translate(calc(var(--s, 1) * -5px), 10px);
+      }
+      100% {
+        transform: rotate(calc(var(--s, 1) * 120deg)) translate(0);
+      }
+    }
+
+    .status-text-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 1px;
+      min-width: 0;
+      max-width: calc(100% - 22px);
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .status-processing-text {
+      font-size: 5.6px;
+      color: #ffffff;
+      font-weight: 600;
+      letter-spacing: 0.1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.15;
+      text-align: left;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    .status-mode-text {
+      font-size: 5.0px;
+      color: rgba(255, 255, 255, 0.85);
+      font-weight: 400;
+      letter-spacing: 0.1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.15;
+      text-align: left;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* ==========================================================================
+       DRIVERS LIST SECTION (Slimmer Rows, Reduced Gap)
+       ========================================================================== */
+    .drivers-section {
+      background: rgba(18, 18, 20, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      padding: 3px 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .drivers-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2px;
+      padding-bottom: 2px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .drivers-header-left {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .drivers-title {
+      font-size: 7.5px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: 0.1px;
+    }
+
+    .drivers-page-badge {
+      font-size: 5.8px;
+      font-weight: 700;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: 2px;
+      padding: 0.5px 2.5px;
+      line-height: 1;
+      letter-spacing: 0.2px;
+    }
+
+    /* ==========================================================================
+       DRIVERS STATUS & SELECTOR SECTION (Matrix Layout)
+       ========================================================================== */
+    .drivers-section {
+      background: rgba(18, 18, 22, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 4px;
+      padding: 3px 5px;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5px;
+      box-sizing: border-box;
+      width: 100%;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    @keyframes shakeWarning {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-3px); }
+      40%, 80% { transform: translateX(3px); }
+    }
+    .drivers-section.shake-warning {
+      animation: shakeWarning 0.35s ease;
+      box-shadow: 0 0 8px rgba(255, 68, 68, 0.4) !important;
+      border-color: rgba(255, 68, 68, 0.5) !important;
+    }
+
+    .drivers-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1px;
+      padding-bottom: 1px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .drivers-title {
+      font-size: 7.2px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: 0.1px;
+    }
+
+    .drivers-count-badge {
+      font-size: 5.6px;
+      font-weight: 700;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: 2px;
+      padding: 0.5px 3px;
+      line-height: 1;
+    }
+
+    .drive-grid-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 2px;
+      width: 100%;
+    }
+
+    .drive-slot-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      height: 15px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 2.5px;
+      cursor: pointer;
+      padding: 0 1px;
+      position: relative;
+      transition: all 0.15s ease;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    .drive-slot-item:hover:not(.empty-slot) {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-0.5px);
+    }
+
+    .drive-slot-item.empty-slot {
+      opacity: 0.28;
+      cursor: default;
+      border-color: rgba(255, 255, 255, 0.04);
+    }
+
+    .drive-slot-item.drive-mounted {
+      border-color: rgba(34, 197, 94, 0.5);
+    }
+
+    .drive-slot-item.drive-asleep {
+      border-color: rgba(234, 179, 8, 0.5);
+    }
+
+    .drive-slot-label {
+      font-size: 6.4px;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1;
+    }
+
+    .drive-slot-dot {
+      width: 2.5px;
+      height: 2.5px;
+      border-radius: 50%;
+      background: transparent;
+      position: absolute;
+      top: 1.5px;
+      right: 1.5px;
+    }
+
+    .drive-slot-item.drive-mounted .drive-slot-dot {
+      background: #22c55e;
+      box-shadow: 0 0 2.5px #22c55e;
+    }
+
+    .drive-slot-item.drive-asleep .drive-slot-dot {
+      background: #eab308;
+    }
+
+    .drive-all-row {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .drive-slot-item.all-slot {
+      width: 55px;
+      height: 14px;
+      background: rgba(56, 189, 248, 0.08);
+      border-color: rgba(56, 189, 248, 0.28);
+    }
+
+    .drive-slot-item.all-slot:hover {
+      background: rgba(56, 189, 248, 0.18);
+    }
+
+    /* Custom Red Checkbox (Checked = Red with white tick, Unchecked = Black with NO tick) */
+    .custom-checkbox {
+      position: relative;
+      width: 8px;
+      height: 8px;
+      background: #ff1a1a;
+      border: 1px solid #ff3333;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(255, 26, 26, 0.5);
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+      box-sizing: border-box;
+    }
+    .custom-checkbox:hover {
+      filter: brightness(1.18);
+      transform: scale(1.08);
+    }
+    .custom-checkbox.unchecked {
+      background: #000000 !important;
+      border: 1px solid rgba(255, 255, 255, 0.3) !important;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.9) !important;
+    }
+    .custom-checkbox .check-svg {
+      width: 5.5px;
+      height: 5.5px;
+      stroke: #ffffff;
+      stroke-width: 2.5;
+      fill: none;
+      display: block;
+    }
+    .custom-checkbox.unchecked .check-svg {
+      display: none !important;
+    }
+
+    /* Drive Hover Details Tooltip Popup - Strictly Contained Inside .card */
+    .drive-hover-popup {
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      width: calc(100% - 12px);
+      box-sizing: border-box;
+      z-index: 99999;
+      pointer-events: none;
+      background: rgba(12, 16, 24, 0.98);
+      border: 1px solid rgba(255, 65, 65, 0.7);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85), 0 0 14px rgba(255, 65, 65, 0.35);
+      border-radius: 6px;
+      padding: 5px 7px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 7.2px;
+      color: #e2e8f0;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(2px);
+      transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+    }
+    .drive-hover-popup.visible {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    .popup-title {
+      font-weight: 700;
+      color: #ffffff;
+      font-size: 8px;
+      margin-bottom: 2px;
+      letter-spacing: 0.15px;
+      word-break: break-word;
+      line-height: 1.25;
+    }
+    .popup-divider {
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255, 75, 75, 0.9) 0%, rgba(255, 255, 255, 0.15) 100%);
+      margin: 2.5px 0 4px 0;
+    }
+    .popup-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 2px;
+      line-height: 1.35;
+    }
+    .popup-label {
+      color: #94a3b8;
+      font-size: 6.8px;
+      flex-shrink: 0;
+      text-transform: capitalize;
+    }
+    .popup-val {
+      color: #f1f5f9;
+      font-weight: 500;
+      font-size: 7.2px;
+      text-align: right;
+      word-break: break-all;
+    }
+    .popup-row.vertical-wrap {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1.5px;
+    }
+    .popup-val.val-path {
+      text-align: left;
+      word-break: break-all;
+      font-size: 6.8px;
+      color: #93c5fd;
+      line-height: 1.25;
+    }
+    .popup-val.val-highlight {
+      color: #4ade80;
+      font-weight: 600;
+    }
+    .popup-val.val-type {
+      color: #60a5fa;
+      font-weight: 600;
+    }
+
+    /* Batch Actions Row (Mount | Unmount | Open Finder) */
+    .drive-actions-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 2.5px;
+      width: 100%;
+      margin-top: 0.5px;
+    }
+
+    .batch-action-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2.5px;
+      height: 15px;
+      border-radius: 2.5px;
+      border: 1px solid transparent;
+      font-size: 6.6px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      color: #ffffff;
+      box-sizing: border-box;
+      padding: 0;
+    }
+
+    .batch-btn-icon {
+      width: 7.5px;
+      height: 7.5px;
+    }
+
+    .mount-batch-btn {
+      background: rgba(34, 197, 94, 0.2);
+      border-color: rgba(34, 197, 94, 0.5);
+      color: #4ade80;
+    }
+    .mount-batch-btn:hover {
+      background: rgba(34, 197, 94, 0.35);
+      transform: translateY(-0.5px);
+    }
+
+    .unmount-batch-btn {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.5);
+      color: #f87171;
+    }
+    .unmount-batch-btn:hover {
+      background: rgba(239, 68, 68, 0.35);
+      transform: translateY(-0.5px);
+    }
+
+    .finder-batch-btn {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: rgba(56, 189, 248, 0.5);
+      color: #38bdf8;
+    }
+    .finder-batch-btn:hover {
+      background: rgba(56, 189, 248, 0.35);
+      transform: translateY(-0.5px);
+    }
+
+    /* JulioCodesSM pretty-dingo-70 switch styling */
+    .toggles-grid-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5px;
+      width: 100%;
+      margin-top: 0.5px;
+    }
+
+    .dingo-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 13.5px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+      padding: 0 3px;
+      box-sizing: border-box;
+    }
+
+    .dingo-label-wrap {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .dingo-icon {
+      font-size: 6.5px;
+      line-height: 1;
+    }
+
+    .dingo-text {
+      font-size: 6.2px;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1;
+    }
+
+    .dingo-button {
+      display: inline-block;
+      width: 18px;
+      height: 8.5px;
+      background-color: rgba(255, 255, 255, 0.16);
+      border-radius: 10px;
+      border: 0.5px solid rgba(255, 255, 255, 0.12);
+      cursor: pointer;
+      padding: 0;
+      color: white;
+      position: relative;
+      flex-shrink: 0;
+      transition: background-color 0.2s ease;
+    }
+
+    .dingo-button input {
+      display: none;
+    }
+
+    .dingo-slider {
+      display: block;
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .dingo-slider::after {
+      content: 'OFF';
+      width: 7.5px;
+      height: 7.5px;
+      background-color: #e03c3c;
+      border: 0.8px solid #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+      position: absolute;
+      top: 0px;
+      left: 0.5px;
+      display: grid;
+      place-content: center;
+      line-height: 1;
+      font-size: 2.8px;
+      font-weight: 900;
+      letter-spacing: -0.2px;
+      transition: background-color 0.22s, transform 0.22s ease-in-out;
+    }
+
+    .dingo-button input:checked + .dingo-slider::after {
+      content: 'ON';
+      background-color: #05ae3e;
+      transform: translateX(9px) rotate(360deg);
+    }
+
+    /* ==========================================================================
+       TWO-COLUMN SETTINGS & CONTROLS GRID (Slim 19px Rows, Aligned with Drivers List)
+       ========================================================================== */
+    .grid-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      padding: 0 5px;
+    }
+
+    .control-card {
+      background: rgba(22, 22, 26, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 3px;
+      padding: 1px 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2px;
+      height: 19px;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+      cursor: pointer;
+    }
+    .control-card:hover {
+      background: rgba(0, 255, 234, 0.08);
+      border-color: #00ffea;
+      box-shadow: 0 0 8px rgba(0, 255, 234, 0.5);
+    }
+
+    .control-card-left {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .round-icon {
+      width: 11px;
+      height: 11px;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .round-icon svg {
+      width: 7px;
+      height: 7px;
+    }
+
+    .icon-yellow { background: rgba(234, 179, 8, 0.15); color: #eab308; stroke: #eab308; }
+    .icon-blue { background: rgba(56, 189, 248, 0.15); color: #38bdf8; stroke: #38bdf8; }
+    .icon-green { background: rgba(34, 197, 94, 0.15); color: #22c55e; stroke: #22c55e; }
+    .icon-purple { background: rgba(168, 85, 247, 0.15); color: #a855f7; stroke: #a855f7; }
+    .icon-red { background: rgba(239, 68, 68, 0.15); color: #ef4444; stroke: #ef4444; }
+    .icon-grey { background: rgba(156, 163, 175, 0.15); color: #9ca3af; stroke: #9ca3af; }
+
+    .control-title {
+      font-size: 6.8px;
+      font-weight: 600;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Dropdown selects in control card - Clean, Left-Aligned & Clearly Visible */
+    .custom-select {
+      background: #121214;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #ffffff;
+      font-size: 7.2px;
+      font-weight: 700;
+      padding: 0 2px;
+      height: 14px;
+      border-radius: 2.5px;
+      cursor: pointer;
+      outline: none;
+      flex-shrink: 0;
+      text-align: center;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+      transition: border-color 0.2s ease;
+    }
+    .custom-select:hover, .custom-select:focus {
+      border-color: #38bdf8;
+    }
+
+    #sleepTimerSelect {
+      width: 25px;
+      font-size: 7.5px;
+      font-weight: 700;
+      margin-left: 2px;
+    }
+
+    #ejectedDiskSelect {
+      width: 19px;
+      font-size: 8px;
+      font-weight: 800;
+      margin-left: 1px;
+    }
+
+    .after-arrow-icon {
+      width: 7.5px;
+      height: 7.5px;
+      stroke: #eab308;
+      flex-shrink: 0;
+      margin-left: 1px;
+    }
+
+
+    /* ==========================================================================
+       3D RAISED CHROME TEXT WATERMARK (matching user image "GET STARTED")
+       Directly on card background (no box), heavy 3D extrusion, dark perimeter,
+       warm metallic under-rim reflection, and smooth shine sweep loop.
+       ========================================================================== */
+    /* ==========================================================================
+       SIRAJ-BD WATERMARK (Deep-Punched Metal Carving matching media_1790034518171.png)
+       Straight front-facing, deeply punched into card surface, silver inside,
+       crisp silver-beveled bottom edge, top drop-in shadow, NO outer box.
+       ========================================================================== */
+    @keyframes punchedSilverShine {
+      0% {
+        background-position: 100% 0;
+      }
+      100% {
+        background-position: -100% 0;
+      }
+    }
+
+    .logout-cell {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      height: 19px;
+      padding-left: 2px;
+      padding-right: 1px;
+      box-sizing: border-box;
+    }
+
+    /* Clean container - strictly NO side borders, NO box */
+    .punched-watermark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+      margin: 0;
+      text-decoration: none;
+      cursor: pointer;
+      user-select: none;
+      flex-shrink: 0;
+      transition: transform 0.2s ease;
+    }
+
+    .punched-watermark:hover {
+      transform: scale(1.04);
+    }
+
+    /* Deep-punched straight front-facing text (matching reference image) */
+    .punched-text {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.35px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      /* Inside the cut: brushed silver with smooth shine sweep */
+      background: linear-gradient(
+        to right,
+        #4b515d 0%,
+        #71717a 25%,
+        #cbd5e1 45%,
+        #ffffff 50%,
+        #cbd5e1 55%,
+        #71717a 75%,
+        #4b515d 100%
+      );
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: punchedSilverShine 3.5s linear infinite;
+      /* Exact deep punch bevel: dark overhang shadow on top, razor-sharp silver highlight rim on bottom */
+      filter: drop-shadow(0 -1.2px 0.5px #000000)
+              drop-shadow(0 1px 0 rgba(255, 255, 255, 0.55));
+    }
+
+    .Btn-logout {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      width: 15px;
+      height: 15px;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition-duration: .3s;
+      box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.35);
+      background-color: rgb(255, 65, 65);
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+
+    /* sign */
+    .Btn-logout .sign {
+      width: 100%;
+      height: 100%;
+      transition-duration: .3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .Btn-logout .sign svg {
+      width: 7px;
+      height: 7px;
+    }
+
+    .Btn-logout .sign svg path {
+      fill: white;
+    }
+
+    /* text */
+    .Btn-logout .text-logout {
+      position: absolute;
+      right: 2px;
+      width: 0;
+      opacity: 0;
+      color: white;
+      font-size: 6.2px;
+      font-weight: 700;
+      letter-spacing: -0.1px;
+      transition-duration: .3s;
+      white-space: nowrap;
+      overflow: hidden;
+      line-height: 1;
+    }
+
+    /* hover effect on button width - compact 35px */
+    .Btn-logout:hover,
+    .Btn-logout.expanded {
+      width: 35px;
+      border-radius: 7.5px;
+      transition-duration: .3s;
+    }
+
+    .Btn-logout:hover .sign,
+    .Btn-logout.expanded .sign {
+      width: 11px;
+      transition-duration: .3s;
+      padding-left: 2.5px;
+      justify-content: flex-start;
+    }
+
+    /* hover effect button's text - snug fit right next to icon */
+    .Btn-logout:hover .text-logout,
+    .Btn-logout.expanded .text-logout {
+      opacity: 1;
+      width: calc(100% - 13.5px);
+      transition-duration: .3s;
+      padding-right: 2px;
+      text-align: center;
+    }
+
+    /* button click effect */
+    .Btn-logout:active {
+      transform: translate(1px, 1px);
+    }
+
+    /* ==========================================================================
+       FOOTER BRANDING
+       ========================================================================== */
+    .footer-brand {
+      text-align: center;
+      padding-top: 0;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2.5px;
+    }
+
+    .footer-brand .green-accent {
+      color: #22c55e;
+      text-shadow: 0 0 8px rgba(34, 197, 94, 0.7);
+      transition: text-shadow 0.35s ease;
+    }
+
+    .footer-brand .red-accent {
+      color: #ff3333;
+      text-shadow: 0 0 8px rgba(255, 51, 51, 0.7);
+      transition: color 0.35s ease, text-shadow 0.35s ease;
+    }
+
+    .card:hover .footer-brand .red-accent {
+      color: #ff2222;
+      text-shadow: 0 0 12px rgba(255, 34, 34, 0.95), 0 0 20px rgba(255, 34, 34, 0.5);
+    }
+
+    .card:hover .footer-brand .green-accent {
+      text-shadow: 0 0 12px rgba(34, 197, 94, 0.95);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <!-- Contained water-colour blur layer safely behind card controls -->
+    <div class="card-watercolor-bg"></div>
+    <!-- 1. HEADER: GITHUB UI (unlucky-rattlesnake-65) with Center Justified Text -->
+    <div class="github-header-btn">
+      <a class="gh-left-clickable" href="https://github.com/siraj-bd" target="_blank" onclick="openExternalURL('https://github.com/siraj-bd', event)" title="Developer Profile (siraj-bd)">
+        <svg class="gh-icon-svg" viewBox="0 0 438.549 438.549">
+          <path d="M409.132 114.573c-19.608-33.596-46.205-60.194-79.798-79.8-33.598-19.607-70.277-29.408-110.063-29.408-39.781 0-76.472 9.804-110.063 29.408-33.596 19.605-60.192 46.204-79.8 79.8C9.803 148.168 0 184.854 0 224.63c0 47.78 13.94 90.745 41.827 128.906 27.884 38.164 63.906 64.572 108.063 79.227 5.14.954 8.945.283 11.419-1.996 2.475-2.282 3.711-5.14 3.711-8.562 0-.571-.049-5.708-.144-15.417a2549.81 2549.81 0 01-.144-25.406l-6.567 1.136c-4.187.767-9.469 1.092-15.846 1-6.374-.089-12.991-.757-19.842-1.999-6.854-1.231-13.229-4.086-19.13-8.559-5.898-4.473-10.085-10.328-12.56-17.556l-2.855-6.57c-1.903-4.374-4.899-9.233-8.992-14.559-4.093-5.331-8.232-8.945-12.419-10.848l-1.999-1.431c-1.332-.951-2.568-2.098-3.711-3.429-1.142-1.331-1.997-2.663-2.568-3.997-.572-1.335-.098-2.43 1.427-3.289 1.525-.859 4.281-1.276 8.28-1.276l5.708.853c3.807.763 8.516 3.042 14.133 6.851 5.614 3.806 10.229 8.754 13.846 14.842 4.38 7.806 9.657 13.754 15.846 17.847 6.184 4.093 12.419 6.136 18.699 6.136 6.28 0 11.704-.476 16.274-1.423 4.565-.952 8.848-2.383 12.847-4.285 1.713-12.758 6.377-22.559 13.988-29.41-10.848-1.14-20.601-2.857-29.264-5.14-8.658-2.286-17.605-5.996-26.835-11.14-9.235-5.137-16.896-11.516-22.985-19.126-6.09-7.614-11.088-17.61-14.987-29.979-3.901-12.374-5.852-26.648-5.852-42.826 0-23.035 7.52-42.637 22.557-58.817-7.044-17.318-6.379-36.732 1.997-58.24 5.52-1.715 13.706-.428 24.554 3.853 10.85 4.283 18.794 7.952 23.84 10.994 5.046 3.041 9.089 5.618 12.135 7.708 17.705-4.947 35.976-7.421 54.818-7.421s37.117 2.474 54.823 7.421l10.849-6.849c7.419-4.57 16.18-8.758 26.262-12.565 10.088-3.805 17.802-4.853 23.134-3.138 8.562 21.509 9.325 40.922 2.279 58.24 15.036 16.18 22.559 35.787 22.559 58.817 0 16.178-1.958 30.497-5.853 42.966-3.9 12.471-8.941 22.457-15.125 29.979-6.191 7.521-13.901 13.85-23.131 18.986-9.232 5.14-18.182 8.85-26.84 11.136-8.662 2.286-18.415 4.004-29.263 5.146 9.894 8.562 14.842 22.077 14.842 40.539v60.237c0 3.422 1.19 6.279 3.572 8.562 2.379 2.279 6.136 2.95 11.276 1.995 44.163-14.653 80.185-41.062 108.068-79.226 27.88-38.161 41.825-81.126 41.825-128.906-.01-39.771-9.818-76.454-29.414-110.049z"></path>
+        </svg>
+      </a>
+
+      <a class="gh-center-title" href="https://github.com/siraj-bd/Safe-Drive-Ejector-macOS" target="_blank" onclick="openExternalURL('https://github.com/siraj-bd/Safe-Drive-Ejector-macOS', event)" style="text-decoration: none; color: #ffffff;" title="Open Repository (Safe-Drive-Ejector-macOS)"><b>Follow &amp; Star On GitHub</b></a>
+
+      <div class="gh-star-clickable" id="starBtn" onclick="handleStarClick(event)" title="Star Safe-Drive-Ejector-macOS on GitHub">
+        <svg class="gh-star-icon" viewBox="0 0 24 24">
+          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+        </svg>
+        <span class="gh-star-count" id="starCount">0</span>
+      </div>
+    </div>
+
+    <!-- 2. STATUS SECTION: Centered Status on top, Animated icon on left of aligned process lines -->
+    <div class="status-container">
+
+      <div class="status-top-bar">
+        <div></div>
+        <div class="status-title"><u>Status</u></div>
+        <div class="status-size-wrap">
+          <span class="size-label">Size:</span>
+          <select class="custom-select size-select" id="cardScaleSelect" onchange="changeCardScale(this.value)">
+            <option value="1">1X</option>
+            <option value="1.25">1.25X</option>
+            <option value="1.5">1.5X</option>
+            <option value="2">2X</option>
+          </select>
+        </div>
+      </div>
+      <div class="status-body-row" id="statusBodyRow">
+        <div class="status-loader-wrap" title="System Processing">
+          <div class="loader-scaler">
+            <div class="loader"></div>
+          </div>
+        </div>
+        <div class="status-text-group">
+          <div class="status-processing-text" id="statusProcessingText">Processing..........</div>
+          <div class="status-mode-text" id="statusModeText">Auto-Complete Enabled</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. DRIVERS LIST SECTION -->
+    <div class="drivers-section">
+      <div class="drivers-header">
+        <div class="drivers-header-left">
+          <span class="drivers-title">Drivers Status &amp; Selector</span>
+        </div>
+        <span class="drivers-count-badge" id="driversCountBadge">0 / 10 Connected</span>
+      </div>
+
+      <!-- ROW 1: 1st to 5th Drive -->
+      <div class="drive-grid-row">
+        <!-- 1st -->
+        <div class="drive-slot-item empty-slot" id="slotDriver1" data-slot="1" onclick="toggleSlotCheckbox(1, event)" onmouseenter="handleSlotHover(1)" onmouseleave="hideDriveHoverPopup()">
+          <div class="custom-checkbox unchecked" id="checkDriver1" onclick="toggleSlotCheckbox(1, event)">
+            <svg class="check-svg" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <span class="drive-slot-label">1st</span>
+          <span class="drive-slot-dot"></span>
+        </div>
+        <!-- 2nd -->
+        <div class="drive-slot-item empty-slot" id="slotDriver2" data-slot="2" onclick="toggleSlotCheckbox(2, event)" onmouseenter="handleSlotHover(2)" onmouseleave="hideDriveHoverPopup()">
+          <div class="custom-checkbox unchecked" id="checkDriver2" onclick="toggleSlotCheckbox(2, event)">
+            <svg class="check-svg" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <span class="drive-slot-label">2nd</span>
+          <span class="drive-slot-dot"></span>
+        </div>
+        <!-- 3rd -->
+        <div class="drive-slot-item empty-slot" id="slotDriver3" data-slot="3" onclick="toggleSlotCheckbox(3, event)" onmouseenter="handleSlotHover(3)" onmouseleave="hideDriveHoverPopup()">
+          <div class="custom-checkbox unchecked" id="checkDriver3" onclick="toggleSlotCheckbox(3, event)">
+            <svg class="check-svg" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <span class="drive-slot-label">3rd</span>
+          <span class="drive-slot-dot"></span>
+        </div>
+        <!-- 4th -->
+        <div class="drive-slot-item empty-slot" id="slotDriver4" data-slot="4" onclick="toggleSlotCheckbox(4, event)" onmouseenter="handleSlotHover(4)" onmouseleave="hideDriveHoverPopup()">
+          <div class="custom-checkbox unchecked" id="checkDriver4" onclick="toggleSlotCheckbox(4, event)">
+            <svg class="check-svg" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <span class="drive-slot-label">4th</span>
+          <span class="drive-slot-dot"></span>
+        </div>
+        <!-- 5th -->
+        <div class="drive-slot-item empty-slot" id="slotDriver5" data-slot="5" onclick="toggleSlotCheckbox(5, event)" onmouseenter="handleSlotHover(5)" onmouseleave="hideDriveHoverPopup()">
+          <div class="custom-checkbox unchecked" id="checkDriver5" onclick="toggleSlotCheckbox(5, event)">
+            <svg class="check-svg" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <span class="drive-slot-label">5th</span>
+          <span class="drive-slot-dot"></span>
+        </div>
+      </div>
+
+      <!-- ROW 2: 6th to 10th Drive -->
+      <div class="drive-grid-row">
+        <!-- 6th -->
+        <div class="drive-slot-item empty-slot" id="slotDriver6" data-slot="6" onclick="toggleSlotCheckbox(6, event)" onmouseenter="handleSlotHover(6)" onmouseleave="hideDriveHoverPopup()">
+          <div class="custom-checkbox unchecked" id="checkDriver6" onclick="toggleSlotCheckbox(6, event)">
+            <svg class="check-svg" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <span class="drive-slot-label">6th</span>
+          <span class="drive-slot-dot"></span>
+        </div>
+        <!-- 7th -->
+        <div class="drive-slot-item empty-slot" id="slotDriver7" data-slot="7" onclick="toggleSlotCheckbox(7, event)" onmouseenter="handleSlotHover(7)" onmouseleave="hideDriveHoverPopup()">
+          <div class="custom-checkbox unchecked" id="checkDriver7" onclick="toggleSlotCheckbox(7, event)">
+            <svg class="check-svg" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <span class="drive-slot-label">7th</span>
+          <span class="drive-slot-dot"></span>
+        </div>
+        <!-- 8th -->
+        <div class="drive-slot-item empty-slot" id="slotDriver8" data-slot="8" onclick="toggleSlotCheckbox(8, event)" onmouseenter="handleSlotHover(8)" onmouseleave="hideDriveHoverPopup()">
+          <div class="custom-checkbox unchecked" id="checkDriver8" onclick="toggleSlotCheckbox(8, event)">
+            <svg class="check-svg" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <span class="drive-slot-label">8th</span>
+          <span class="drive-slot-dot"></span>
+        </div>
+        <!-- 9th -->
+        <div class="drive-slot-item empty-slot" id="slotDriver9" data-slot="9" onclick="toggleSlotCheckbox(9, event)" onmouseenter="handleSlotHover(9)" onmouseleave="hideDriveHoverPopup()">
+          <div class="custom-checkbox unchecked" id="checkDriver9" onclick="toggleSlotCheckbox(9, event)">
+            <svg class="check-svg" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <span class="drive-slot-label">9th</span>
+          <span class="drive-slot-dot"></span>
+        </div>
+        <!-- 10th -->
+        <div class="drive-slot-item empty-slot" id="slotDriver10" data-slot="10" onclick="toggleSlotCheckbox(10, event)" onmouseenter="handleSlotHover(10)" onmouseleave="hideDriveHoverPopup()">
+          <div class="custom-checkbox unchecked" id="checkDriver10" onclick="toggleSlotCheckbox(10, event)">
+            <svg class="check-svg" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <span class="drive-slot-label">10th</span>
+          <span class="drive-slot-dot"></span>
+        </div>
+      </div>
+
+      <!-- ROW 3: ALL -->
+      <div class="drive-all-row">
+        <div class="drive-slot-item all-slot" id="slotDriverAll" onclick="toggleAllCheckbox(event)">
+          <div class="custom-checkbox unchecked" id="checkDriverAll">
+            <svg class="check-svg" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <span class="drive-slot-label" style="font-weight: 800; letter-spacing: 0.3px;">ALL</span>
+        </div>
+      </div>
+
+      <!-- ROW 4: Mount | Unmount | Open Finder -->
+      <div class="drive-actions-row">
+        <button class="batch-action-btn mount-batch-btn" onclick="triggerBatchMount()" title="Mount Selected Drives">
+          <svg class="batch-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
+          <span>Mount</span>
+        </button>
+        <button class="batch-action-btn unmount-batch-btn" onclick="triggerBatchUnmount()" title="Unmount Selected Drives">
+          <svg class="batch-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          <span>Unmount</span>
+        </button>
+        <button class="batch-action-btn finder-batch-btn" onclick="triggerOpenFinder()" title="Open in Finder">
+          <svg class="batch-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          <span>Finder</span>
+        </button>
+      </div>
+
+      <!-- ROW 5: Sound ON/OFF | Notification ON/OFF (with JulioCodesSM pretty-dingo-70 switch) -->
+      <div class="toggles-grid-row">
+        <div class="dingo-card" title="Toggle audio chime feedback">
+          <div class="dingo-label-wrap">
+            <span class="dingo-icon">🔊</span>
+            <span class="dingo-text">Sound</span>
+          </div>
+          <label class="dingo-button" for="soundToggle">
+            <input type="checkbox" id="soundToggle" checked onchange="handleSoundToggle(this.checked)">
+            <span class="dingo-slider"></span>
+          </label>
+        </div>
+
+        <div class="dingo-card" title="Toggle macOS desktop notifications">
+          <div class="dingo-label-wrap">
+            <span class="dingo-icon">🔔</span>
+            <span class="dingo-text">Notify</span>
+          </div>
+          <label class="dingo-button" for="notificationToggle">
+            <input type="checkbox" id="notificationToggle" checked onchange="handleNotificationToggle(this.checked)">
+            <span class="dingo-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. TWO-COLUMN SETTINGS & CONTROLS GRID (NO EXTRA SUBTITLES - MATCHING IMAGE 3) -->
+    <div class="grid-section">
+      
+      <!-- ROW 1: Sleep | Awake -->
+      <div class="control-card">
+        <div class="control-card-left">
+          <div class="round-icon icon-yellow">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          </div>
+          <span class="control-title">Sleep</span>
+          <svg class="after-arrow-icon" viewBox="0 0 16 16" fill="none" stroke="#eab308" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" title="Sleep Timer">
+            <polyline points="4 6 8 10 12 6"></polyline>
+          </svg>
+          <select class="custom-select" id="sleepTimerSelect" onchange="changeSleepTimer(this.value)">
+            <option value="2m">2m</option>
+            <option value="5m">5m</option>
+            <option value="10m">10m</option>
+            <option value="15m">15m</option>
+            <option value="30m">30m</option>
+            <option value="1h">1h</option>
+            <option value="2h">2h</option>
+            <option value="never" title="Never">❌</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="control-card" id="deepSleepCard" title="External full hardware deep sleep with light off. Drive stays asleep until manually mounted.">
+        <div class="control-card-left">
+          <div class="round-icon icon-purple">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+          </div>
+          <span class="control-title">Deep Sleep</span>
+        </div>
+        <div class="custom-checkbox" id="deepSleepCheck" onclick="toggleCheckbox(this)" style="margin-right: 2px;" title="External full hardware deep sleep with light off. Drive stays asleep until manually mounted.">
+          <svg class="check-svg" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+      </div>
+
+      <!-- ROW 2: Ejected | Eject Now -->
+      <div class="control-card">
+        <div class="control-card-left">
+          <div class="custom-checkbox unchecked" id="ejectedDiskCheck" onclick="toggleCheckbox(this)">
+            <svg class="check-svg" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <span class="control-title">Ejected</span>
+          <select class="custom-select" id="ejectedDiskSelect" onchange="handleEjectedSelectChange(this.value)">
+            <option value="0" selected>0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="control-card" style="cursor: pointer;" onclick="triggerEjectNow()" title="Click to Eject Now">
+        <div class="control-card-left">
+          <div class="round-icon icon-red">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5L5 15h14L12 5zm-7 12h14v2H5v-2z"></path></svg>
+          </div>
+          <span class="control-title" style="color: #ff5555;">Eject Now</span>
+        </div>
+      </div>
+
+      <!-- ROW 3: Start At Login | Update -->
+      <div class="control-card">
+        <div class="control-card-left">
+          <div class="custom-checkbox unchecked" id="startAtLoginCheck" onclick="toggleCheckbox(this)" style="margin-right: 2px;">
+            <svg class="check-svg" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <span class="control-title">Start At Login</span>
+        </div>
+      </div>
+
+      <div class="control-card" style="cursor: pointer;" onclick="triggerCheckUpdate()" title="Check for updates">
+        <div class="control-card-left">
+          <div class="round-icon icon-blue">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+          </div>
+          <span class="control-title">Update</span>
+        </div>
+      </div>
+
+      <!-- ROW 4: Before System Sleep | About -->
+      <div class="control-card">
+        <div class="control-card-left">
+          <div class="custom-checkbox unchecked" id="beforeSleepCheck" onclick="toggleCheckbox(this)" style="margin-right: 2px;">
+            <svg class="check-svg" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <span class="control-title">Before Sleep</span>
+        </div>
+      </div>
+
+      <div class="control-card" style="cursor: pointer;" onclick="triggerAboutModal()" title="App information">
+        <div class="control-card-left">
+          <div class="round-icon icon-grey">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          </div>
+          <span class="control-title">About</span>
+        </div>
+      </div>
+
+      <!-- ROW 5: Check Locks | Logout Button -->
+      <div class="control-card" style="cursor: pointer;" onclick="triggerCheckLocks()" title="Scan for active apps and file locks blocking drives">
+        <div class="control-card-left">
+          <div class="round-icon icon-yellow">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          </div>
+          <span class="control-title">Check Locks</span>
+        </div>
+      </div>
+
+      <!-- LOGOUT BUTTON & DEEP-PUNCHED SIRAJ-BD WATERMARK (matching user image) -->
+      <div class="logout-cell">
+        <a href="javascript:void(0)"
+           onclick="openExternalURL('https://github.com/siraj-bd', event)"
+           class="punched-watermark"
+           title="Developer & Maintainer: Siraj-BD (Click to visit GitHub)">
+          <span class="punched-text">Siraj-BD</span>
+        </a>
+        <button class="Btn-logout" id="logoutBtn" onclick="handleLogoutClick(event)" title="Logout">
+          <div class="sign">
+            <svg viewBox="0 0 512 512">
+              <path d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z"></path>
+            </svg>
+          </div>
+          <div class="text-logout">Logout</div>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- 5. FOOTER BRANDING -->
+    <div class="footer-brand">
+      <span class="green-accent">Safe Drive</span> <span class="red-accent">Ejector Tool</span>
+    </div>
+
+    <!-- Dynamic Drive Hover Details Tooltip Popup (strictly inside .card container) -->
+    <div id="driveHoverPopup" class="drive-hover-popup" style="display: none;"></div>
+
+  </div>
+
+  <script>
+    // GitHub Stargazers Sync with Actual Repository Count
+    let starCount = 0;
+    let isStarred = false;
+
+    function openExternalURL(url, event) {
+      if (event) event.preventDefault();
+      postToHost({ action: "openURL", url: url });
+      try {
+        window.open(url, "_blank");
+      } catch (e) {}
+    }
+
+    function fetchRepoStars() {
+      fetch("https://api.github.com/repos/siraj-bd/Safe-Drive-Ejector-macOS")
+        .then(res => {
+          if (res.ok) return res.json();
+          throw new Error("API err");
+        })
+        .then(data => {
+          if (typeof data.stargazers_count === "number") {
+            starCount = data.stargazers_count;
+            const elem = document.getElementById("starCount");
+            if (elem) elem.textContent = starCount;
+            localStorage.setItem("SafeDriveEjector_RepoStars", starCount);
+          }
+        })
+        .catch(() => {
+          const cached = localStorage.getItem("SafeDriveEjector_RepoStars");
+          if (cached) {
+            starCount = parseInt(cached, 10);
+            const elem = document.getElementById("starCount");
+            if (elem) elem.textContent = starCount;
+          }
+        });
+    }
+
+    function handleStarClick(e) {
+      if (e) e.stopPropagation();
+      const starBtn = document.getElementById("starBtn");
+      const starCountElem = document.getElementById("starCount");
+      if (!isStarred) {
+        isStarred = true;
+        starCount++;
+        if (starBtn) starBtn.classList.add("starred");
+      } else {
+        isStarred = false;
+        starCount = Math.max(0, starCount - 1);
+        if (starBtn) starBtn.classList.remove("starred");
+      }
+      if (starCountElem) starCountElem.textContent = starCount;
+      localStorage.setItem("SafeDriveEjector_RepoStars", starCount);
+      localStorage.setItem("SafeDriveEjector_IsStarred", isStarred);
+      openExternalURL("https://github.com/siraj-bd/Safe-Drive-Ejector-macOS", e);
+    }
+
+    // Initialize stars on load
+    fetchRepoStars();
+
+    function updateDeepSleepTooltip(isOn) {
+      const tooltip = isOn 
+        ? "External full hardware deep sleep with light off. Drive stays asleep until manually mounted."
+        : "Normal sleep. Laptop activity can wake the drive automatically.";
+      const card = document.getElementById("deepSleepCard");
+      const check = document.getElementById("deepSleepCheck");
+      if (card) card.title = tooltip;
+      if (check) check.title = tooltip;
+    }
+
+    // Generic checkbox toggle handler (Settings grid)
+    function toggleCheckbox(element) {
+      element.classList.toggle("unchecked");
+      const isChecked = !element.classList.contains("unchecked");
+      if (element.id === "deepSleepCheck" || element.id === "autoAwakeCheck") {
+        updateDeepSleepTooltip(isChecked);
+      }
+      postToHost({ action: "checkboxToggle", id: element.id, checked: isChecked });
+    }
+
+    // Audio Feedback (Web Audio API synthesised soft chime with shared AudioContext)
+    let _sharedAudioCtx = null;
+    function getAudioContext() {
+      if (!_sharedAudioCtx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) _sharedAudioCtx = new AudioCtx();
+      }
+      if (_sharedAudioCtx && _sharedAudioCtx.state === "suspended") {
+        _sharedAudioCtx.resume().catch(() => {});
+      }
+      return _sharedAudioCtx;
+    }
+
+    function playAudioFeedback(type = "success") {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        if (type === "success") {
+          const osc1 = ctx.createOscillator();
+          const osc2 = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc1.type = "sine";
+          osc2.type = "sine";
+          osc1.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+          osc1.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
+          osc2.frequency.setValueAtTime(880, ctx.currentTime + 0.08); // A5
+          osc2.frequency.exponentialRampToValueAtTime(1174.66, ctx.currentTime + 0.28); // D6
+          gain.gain.setValueAtTime(0.18, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+          osc1.connect(gain);
+          osc2.connect(gain);
+          gain.connect(ctx.destination);
+          osc1.start();
+          osc2.start(ctx.currentTime + 0.08);
+          osc1.stop(ctx.currentTime + 0.22);
+          osc2.stop(ctx.currentTime + 0.42);
+        } else if (type === "failure" || type === "warning") {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(320, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.18);
+          gain.gain.setValueAtTime(0.14, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.22);
+        }
+      } catch (e) {}
+    }
+
+    // Status Section Processing Controller with continuous animated loop
+    let statusHoldTimer = null;
+    let processingInterval = null;
+    let isProcessingActive = false;
+
+    function startProcessingLoop(actionName = "Processing", targetLabel = "") {
+      const bodyRow = document.getElementById("statusBodyRow");
+      const procElem = document.getElementById("statusProcessingText");
+      const modeElem = document.getElementById("statusModeText");
+      if (!bodyRow || !procElem || !modeElem) return;
+
+      isProcessingActive = true;
+      bodyRow.classList.add("active");
+      clearTimeout(statusHoldTimer);
+      if (processingInterval) clearInterval(processingInterval);
+
+      let step = 0;
+      const displayLabel = targetLabel ? ` ${targetLabel}` : "";
+      const loopStages = [
+        "Processing...",
+        "Processing.....",
+        "Processing.......",
+        "Processing..........",
+        `${actionName}${displayLabel}...`,
+        "Flushing Disk Cache...",
+        "Syncing File Buffers...",
+        `${actionName}${displayLabel}.....`
+      ];
+
+      procElem.textContent = `${actionName}${displayLabel}...`;
+      modeElem.textContent = "Disk Operation Running";
+
+      processingInterval = setInterval(() => {
+        if (!isProcessingActive) return;
+        step = (step + 1) % loopStages.length;
+        procElem.textContent = loopStages[step];
+      }, 300);
+
+      // Standalone browser fallback simulation if not hosted in Swift WKWebView
+      if (!window.webkit || !window.webkit.messageHandlers || !window.webkit.messageHandlers.safeEjectBridge) {
+        setTimeout(() => {
+          if (isProcessingActive) {
+            completeProcessing("Safe to unplug", "Ready");
+          }
+        }, 3500);
+      }
+    }
+
+    function completeProcessing(finalMsg = "Ready", subMsg = "Operation Complete", isError = false) {
+      isProcessingActive = false;
+      if (processingInterval) {
+        clearInterval(processingInterval);
+        processingInterval = null;
+      }
+
+      const bodyRow = document.getElementById("statusBodyRow");
+      const procElem = document.getElementById("statusProcessingText");
+      const modeElem = document.getElementById("statusModeText");
+
+      if (procElem) procElem.textContent = finalMsg;
+      if (modeElem) modeElem.textContent = subMsg;
+
+      playAudioFeedback(isError ? "failure" : "success");
+      syncEjectedCount();
+
+      clearTimeout(statusHoldTimer);
+      const holdTime = isError ? 5000 : 2000;
+      statusHoldTimer = setTimeout(() => {
+        if (bodyRow) bodyRow.classList.remove("active");
+        if (procElem) procElem.textContent = isError ? "Action Needed" : "Ready";
+        if (modeElem) modeElem.textContent = isError ? "Check Busy Files" : "System Idle";
+      }, holdTime);
+    }
+
+    // Host IPC callback when backend Process begins
+    window.onOperationStart = function(cmd, targetParam) {
+      const targetLabel = targetParam ? targetParam : "";
+      if (cmd === "eject-now") {
+        startProcessingLoop("Ejecting Safely", targetLabel || "Selected Drives");
+      } else if (cmd === "idle-sleep" || cmd === "deep-sleep") {
+        startProcessingLoop("Deep Sleep", targetLabel || "Hardware Silence");
+      } else if (cmd === "eject") {
+        startProcessingLoop("Unmounting", targetLabel);
+      } else if (cmd === "remount" || cmd === "remount-all") {
+        startProcessingLoop("Mounting", targetLabel || "Sleeping Drives");
+      } else if (cmd === "check-locks" || cmd === "checkLocks") {
+        startProcessingLoop("Scanning Locks", "External Drives");
+      } else {
+        startProcessingLoop("Processing", cmd);
+      }
+    };
+
+    function sanitizeStatusBadge(errMsg, defaultText) {
+      if (!errMsg || typeof errMsg !== "string") return defaultText;
+      const lower = errMsg.toLowerCase();
+      if (lower.includes("in use") || lower.includes("busy") || lower.includes("resource busy")) return "Drive In Use";
+      if (lower.includes("permission") || lower.includes("denied")) return "Permission Denied";
+      if (lower.includes("failed to unmount")) return "Unmount Failed";
+      if (lower.includes("failed to mount")) return "Mount Failed";
+      if (lower.includes("not found")) return "Drive Not Found";
+      if (lower.includes("timeout") || lower.includes("timed out")) return "Timed Out";
+
+      // Strip timestamps and logger tags: e.g. 17:10:36 [INFO]
+      let cleaned = errMsg.replace(/^\d{2,4}[-\/:\d\s]+\[\w+\]\s*/g, '').trim();
+      if (cleaned.length > 22) {
+        return defaultText;
+      }
+      return cleaned || defaultText;
+    }
+
+    // Host IPC callback when backend Process completes
+    window.onOperationComplete = function(cmd, success, errMsg = "") {
+      const cleanErr = errMsg && errMsg.trim() ? errMsg.trim() : "";
+      if (cmd === "eject-now") {
+        completeProcessing(success ? "Safe to Unplug" : "Eject Aborted", success ? "Safe Ejection Done" : sanitizeStatusBadge(cleanErr, "Drive In Use"), !success);
+      } else if (cmd === "idle-sleep" || cmd === "deep-sleep") {
+        completeProcessing(success ? "Deep Sleep" : "Deep Sleep Aborted", success ? "Drive Asleep (Bus Silenced)" : sanitizeStatusBadge(cleanErr, "Drive Busy"), !success);
+      } else if (cmd === "eject") {
+        completeProcessing(success ? "Volume Unmounted" : "Unmount Aborted", success ? "Clean Unmount Done" : sanitizeStatusBadge(cleanErr, "Drive Busy"), !success);
+      } else if (cmd === "remount" || cmd === "remount-all") {
+        completeProcessing(success ? "Drive Mounted" : "Mount Incomplete", success ? "Ready to Access" : sanitizeStatusBadge(cleanErr, "Check Filesystem"), !success);
+      } else if (cmd === "check-locks" || cmd === "checkLocks") {
+        completeProcessing(success ? "Scan Complete" : "Scan Failed", success ? (cleanErr || "Locks Inspected") : "Scan Error", !success);
+      } else {
+        completeProcessing(success ? "Success" : "Failed", sanitizeStatusBadge(cleanErr, "Operation Finished"), !success);
+      }
+    };
+
+    // Scale & Popover Sizing Controller
+    let currentScale = 1.0;
+    let currentDrives = [];
+    let currentDriveOffset = 1;
+
+    function changeCardScale(val) {
+      let scale = parseFloat(val) || 1.0;
+      if (scale > 2.0) scale = 2.0;
+      if (scale < 1.0) scale = 1.0;
+      currentScale = scale;
+      hideDriveHoverPopup();
+      localStorage.setItem("SafeDriveEjector_CardScale", scale);
+
+      const select = document.getElementById("cardScaleSelect");
+      if (select && select.value !== String(scale)) {
+        select.value = String(scale);
+      }
+
+      // Track Menubar specific scale classes (1X, 1.25X, 1.5X)
+      document.body.classList.remove("menubar-scale-1", "menubar-scale-1-25", "menubar-scale-1-5");
+      if (scale === 1.0) {
+        document.body.classList.add("menubar-scale-1");
+      } else if (scale === 1.25) {
+        document.body.classList.add("menubar-scale-1-25");
+      } else if (scale === 1.5) {
+        document.body.classList.add("menubar-scale-1-5");
+      }
+
+      // Apply zoom to document body
+      document.body.style.zoom = scale;
+
+      let targetW, targetH;
+      if (scale === 1.0) {
+        // Verified Menubar 1X sizing for dzoshi 190px card + shadow/scale
+        targetW = 202;
+        targetH = 330;
+      } else if (scale === 1.25) {
+        // Verified Menubar 1.25X sizing
+        targetW = 252;
+        targetH = 412;
+      } else if (scale === 1.5) {
+        // Verified Menubar 1.5X sizing
+        targetW = 303;
+        targetH = 495;
+      } else {
+        // 2X sizing (max scale supported)
+        const baseW = 202;
+        const baseH = 330;
+        targetW = Math.round(baseW * scale);
+        targetH = Math.round(baseH * scale);
+      }
+
+      postToHost({ action: "resizePopover", width: targetW, height: targetH });
+      renderDriveNames();
+    }
+
+    function getOrdinal(n) {
+      const s = ["th", "st", "nd", "rd"];
+      const v = n % 100;
+      return s[(v - 20) % 10] || s[v] || s[0];
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function handleSlotHover(slotNum) {
+      const drive = currentDrives[slotNum - 1];
+      showDriveHoverPopup(drive, null, slotNum);
+    }
+
+    function showDriveHoverPopup(drive, rowId, slotNum) {
+      const popup = document.getElementById("driveHoverPopup");
+      if (!popup) return;
+      const sNum = slotNum || 1;
+      const ordinalName = `${sNum}${getOrdinal(sNum)} Driver`;
+
+      if (!drive || !drive.meta) {
+        let html = `<div class="popup-title" style="display:flex; justify-content:space-between; align-items:center;"><span>${ordinalName}</span><span style="font-size:10px; color:rgba(255,255,255,0.4); font-weight:600;">Slot ${sNum}/10</span></div><div class="popup-divider"></div>`;
+        html += `
+          <div class="popup-row"><span class="popup-label">Status:</span><span class="popup-val" style="color: rgba(255,255,255,0.45);">No Device Connected</span></div>
+          <div class="popup-row"><span class="popup-label">Slot:</span><span class="popup-val">${sNum} of 10</span></div>
+        `;
+        popup.innerHTML = html;
+        popup.style.display = "block";
+        popup.classList.add("visible");
+        positionHoverPopup();
+        return;
+      }
+
+      const meta = drive.meta;
+      let html = `<div class="popup-title" style="display:flex; justify-content:space-between; align-items:center;"><span>${escapeHtml(meta.title)}</span><span style="font-size:10px; color:#38ef7d; font-weight:600; background:rgba(56,239,125,0.12); padding:1px 6px; border-radius:4px;">${ordinalName}</span></div><div class="popup-divider"></div>`;
+      if (meta.is_parent) {
+        html += `
+          <div class="popup-row"><span class="popup-label">Device Node:</span><span class="popup-val val-path">${escapeHtml(drive.id || meta.location)}</span></div>
+          <div class="popup-row"><span class="popup-label">Location:</span><span class="popup-val">${escapeHtml(meta.location)}</span></div>
+          <div class="popup-row"><span class="popup-label">Capacity:</span><span class="popup-val val-highlight">${escapeHtml(meta.capacity)}</span></div>
+          <div class="popup-row"><span class="popup-label">Child Count:</span><span class="popup-val">${meta.child_count}</span></div>
+          <div class="popup-row"><span class="popup-label">Type:</span><span class="popup-val val-type">${escapeHtml(meta.type)}</span></div>
+        `;
+      } else {
+        html += `
+          <div class="popup-row"><span class="popup-label">Partition:</span><span class="popup-val val-path">${escapeHtml(drive.id || '')}</span></div>
+          <div class="popup-row vertical-wrap">
+            <span class="popup-label">Mount Point:</span>
+            <span class="popup-val val-path">${escapeHtml(meta.mount_point || 'Not Mounted')}</span>
+          </div>
+          <div class="popup-row"><span class="popup-label">Capacity:</span><span class="popup-val val-highlight">${escapeHtml(meta.capacity)}</span></div>
+          <div class="popup-row"><span class="popup-label">Type:</span><span class="popup-val val-type">${escapeHtml(meta.type)}</span></div>
+        `;
+      }
+      popup.innerHTML = html;
+      popup.style.display = "block";
+      popup.classList.add("visible");
+      positionHoverPopup();
+    }
+
+    function positionHoverPopup() {
+      const popup = document.getElementById("driveHoverPopup");
+      const cardElem = document.querySelector(".card");
+      const driversSec = document.querySelector(".drivers-section");
+      if (!popup || !cardElem || !driversSec) return;
+
+      const cardRect = cardElem.getBoundingClientRect();
+      const driversRect = driversSec.getBoundingClientRect();
+      const scale = currentScale || 1.0;
+
+      let fixedTop = Math.round((driversRect.bottom - cardRect.top) / scale + 2);
+      if (isNaN(fixedTop) || fixedTop <= 0) {
+        fixedTop = Math.round(driversSec.offsetTop + driversSec.offsetHeight + 2);
+      }
+      popup.style.top = `${fixedTop}px`;
+    }
+
+    function hideDriveHoverPopup() {
+      const popup = document.getElementById("driveHoverPopup");
+      if (popup) {
+        popup.classList.remove("visible");
+        popup.style.display = "none";
+      }
+    }
+
+    // Driver Slot Selection States (1 to 10)
+    const driverCheckStates = {};
+
+    function renderDriveNames() {
+      let connectedCount = 0;
+      for (let sNum = 1; sNum <= 10; sNum++) {
+        const drive = currentDrives[sNum - 1];
+        const slotElem = document.getElementById(`slotDriver${sNum}`);
+        const cbElem = document.getElementById(`checkDriver${sNum}`);
+
+        if (slotElem) {
+          if (!drive) {
+            slotElem.classList.add("empty-slot");
+            slotElem.classList.remove("drive-mounted", "drive-asleep");
+          } else {
+            connectedCount++;
+            slotElem.classList.remove("empty-slot");
+            if (drive.is_mounted === true || drive.mounted === true) {
+              slotElem.classList.add("drive-mounted");
+              slotElem.classList.remove("drive-asleep");
+            } else {
+              slotElem.classList.add("drive-asleep");
+              slotElem.classList.remove("drive-mounted");
+            }
+          }
+        }
+
+        if (cbElem) {
+          if (!drive) {
+            cbElem.classList.add("unchecked");
+            driverCheckStates[sNum] = false;
+          } else {
+            if (driverCheckStates[sNum] === true) {
+              cbElem.classList.remove("unchecked");
+            } else {
+              cbElem.classList.add("unchecked");
+            }
+          }
+        }
+      }
+
+      const countBadge = document.getElementById("driversCountBadge");
+      if (countBadge) {
+        countBadge.textContent = `${connectedCount} / 10 Connected`;
+      }
+
+      syncAllCheckboxState();
+      syncEjectedCount();
+    }
+
+    function toggleSlotCheckbox(slotNum, event) {
+      if (event) event.stopPropagation();
+      const drive = currentDrives[slotNum - 1];
+      if (!drive) return; // Do not check empty slots
+
+      const cbElem = document.getElementById(`checkDriver${slotNum}`);
+      if (!cbElem) return;
+
+      const isNowChecked = cbElem.classList.contains("unchecked");
+      driverCheckStates[slotNum] = isNowChecked;
+
+      if (isNowChecked) {
+        cbElem.classList.remove("unchecked");
+      } else {
+        cbElem.classList.add("unchecked");
+      }
+
+      // Parent/child synchronization
+      if (drive && drive.is_parent && drive.child_ids && drive.child_ids.length > 0) {
+        currentDrives.forEach((d, idx) => {
+          const sNum = idx + 1;
+          if (drive.child_ids.includes(d.id)) {
+            driverCheckStates[sNum] = isNowChecked;
+            const cElem = document.getElementById(`checkDriver${sNum}`);
+            if (cElem) {
+              if (isNowChecked) cElem.classList.remove("unchecked");
+              else cElem.classList.add("unchecked");
+            }
+          }
+        });
+      }
+
+      if (drive && !drive.is_parent && drive.parent_id) {
+        const parentIdx = currentDrives.findIndex(d => d.id === drive.parent_id && d.is_parent);
+        if (parentIdx !== -1) {
+          const parentSlot = parentIdx + 1;
+          const parentDrive = currentDrives[parentIdx];
+          const allChildrenChecked = parentDrive.child_ids && parentDrive.child_ids.length > 0 && parentDrive.child_ids.every(cid => {
+            const cIdx = currentDrives.findIndex(cd => cd.id === cid);
+            return cIdx !== -1 && driverCheckStates[cIdx + 1] === true;
+          });
+          driverCheckStates[parentSlot] = allChildrenChecked;
+          const pElem = document.getElementById(`checkDriver${parentSlot}`);
+          if (pElem) {
+            if (allChildrenChecked) pElem.classList.remove("unchecked");
+            else pElem.classList.add("unchecked");
+          }
+        }
+      }
+
+      syncAllCheckboxState();
+      postToHost({ action: "driveSelection", targets: getCheckedDriveTargets() });
+    }
+
+    function syncAllCheckboxState() {
+      const allCb = document.getElementById("checkDriverAll");
+      if (!allCb) return;
+
+      const connectedSlots = [];
+      for (let s = 1; s <= 10; s++) {
+        if (currentDrives[s - 1]) connectedSlots.push(s);
+      }
+
+      if (connectedSlots.length > 0 && connectedSlots.every(s => driverCheckStates[s] === true)) {
+        allCb.classList.remove("unchecked");
+      } else {
+        allCb.classList.add("unchecked");
+      }
+    }
+
+    function toggleAllCheckbox(event) {
+      if (event) event.stopPropagation();
+      const allCb = document.getElementById("checkDriverAll");
+      if (!allCb) return;
+
+      const isNowChecked = allCb.classList.contains("unchecked");
+      if (isNowChecked) {
+        allCb.classList.remove("unchecked");
+      } else {
+        allCb.classList.add("unchecked");
+      }
+
+      for (let s = 1; s <= 10; s++) {
+        const drive = currentDrives[s - 1];
+        const cbElem = document.getElementById(`checkDriver${s}`);
+        if (drive && cbElem) {
+          driverCheckStates[s] = isNowChecked;
+          if (isNowChecked) {
+            cbElem.classList.remove("unchecked");
+          } else {
+            cbElem.classList.add("unchecked");
+          }
+        }
+      }
+
+      postToHost({ action: "driveSelection", targets: getCheckedDriveTargets() });
+    }
+
+    function getCheckedDriveTargets() {
+      const targets = [];
+      for (let s = 1; s <= 10; s++) {
+        if (driverCheckStates[s] === true && currentDrives[s - 1]) {
+          const drive = currentDrives[s - 1];
+          if (drive.id) targets.push(drive.id.replace(/^\/dev\//, ''));
+        }
+      }
+      return targets;
+    }
+
+    function showDriverSelectionRequiredWarning() {
+      const badge = document.getElementById("driversCountBadge");
+      const selectorSec = document.querySelector(".drivers-section");
+
+      if (badge) {
+        const originalText = badge.textContent;
+        badge.textContent = "Select Driver!";
+        badge.style.color = "#ff4444";
+        badge.style.borderColor = "rgba(255, 68, 68, 0.6)";
+        badge.style.background = "rgba(255, 68, 68, 0.18)";
+
+        setTimeout(() => {
+          badge.textContent = originalText;
+          badge.style.color = "";
+          badge.style.borderColor = "";
+          badge.style.background = "";
+        }, 1600);
+      }
+
+      if (selectorSec) {
+        selectorSec.classList.add("shake-warning");
+        setTimeout(() => {
+          selectorSec.classList.remove("shake-warning");
+        }, 400);
+      }
+
+      if (typeof playAudioFeedback === "function") {
+        playAudioFeedback("warning");
+      }
+    }
+
+    function triggerBatchMount() {
+      const allCb = document.getElementById("checkDriverAll");
+      const isAllChecked = allCb && !allCb.classList.contains("unchecked");
+      const targets = getCheckedDriveTargets();
+
+      if (!isAllChecked && targets.length === 0) {
+        showDriverSelectionRequiredWarning();
+        return;
+      }
+
+      if (isAllChecked) {
+        startProcessingLoop("Mounting", "All Drivers");
+        postToHost({ action: "mount", target: "all" });
+      } else {
+        startProcessingLoop("Mounting", targets.join(", "));
+        postToHost({ action: "mount", drivers: targets });
+      }
+    }
+
+    function triggerBatchUnmount() {
+      const allCb = document.getElementById("checkDriverAll");
+      const isAllChecked = allCb && !allCb.classList.contains("unchecked");
+      const targets = getCheckedDriveTargets();
+
+      if (!isAllChecked && targets.length === 0) {
+        showDriverSelectionRequiredWarning();
+        return;
+      }
+
+      if (isAllChecked) {
+        startProcessingLoop("Safe Unmount", "All Drivers");
+        postToHost({ action: "unmount", target: "all" });
+      } else {
+        startProcessingLoop("Safe Unmount", targets.join(", "));
+        postToHost({ action: "unmount", drivers: targets });
+      }
+    }
+
+    function triggerOpenFinder() {
+      const allCb = document.getElementById("checkDriverAll");
+      const isAllChecked = allCb && !allCb.classList.contains("unchecked");
+      const targets = getCheckedDriveTargets();
+
+      if (!isAllChecked && targets.length === 0) {
+        showDriverSelectionRequiredWarning();
+        return;
+      }
+
+      let mountPath = "/Volumes";
+      if (!isAllChecked && targets.length > 0) {
+        for (const t of targets) {
+          const d = currentDrives.find(cd => cd.id && cd.id.includes(t));
+          if (d && d.meta && d.meta.mount_point && d.meta.mount_point !== "Not mounted") {
+            mountPath = d.meta.mount_point;
+            break;
+          }
+        }
+      }
+
+      postToHost({ action: "openFinder", path: mountPath });
+    }
+
+    function triggerEjectNow() {
+      const allCb = document.getElementById("checkDriverAll");
+      const isAllChecked = allCb && !allCb.classList.contains("unchecked");
+      const targets = getCheckedDriveTargets();
+
+      if (targets.length > 0 && !isAllChecked) {
+        startProcessingLoop("Ejecting Safely", targets.join(", "));
+        postToHost({ action: "ejectNow", drivers: targets });
+      } else {
+        startProcessingLoop("Ejecting Safely", "All External Drives");
+        postToHost({ action: "ejectNow" });
+      }
+    }
+
+    function handleSoundToggle(checked) {
+      soundEnabled = checked;
+      localStorage.setItem("SafeDriveEjector_Sound", checked ? "true" : "false");
+      if (checked) {
+        playAudioFeedback("success");
+      }
+    }
+
+    function handleNotificationToggle(checked) {
+      postToHost({ action: "checkboxToggle", id: "notificationToggle", checked: checked });
+    }
+
+    function syncEjectedCount(overrideCount = null) {
+      const select = document.getElementById("ejectedDiskSelect");
+      const checkElem = document.getElementById("ejectedDiskCheck");
+      if (!select) return;
+
+      let actualCount = 0;
+      if (typeof overrideCount === "number") {
+        actualCount = Math.max(0, overrideCount);
+      } else {
+        if (currentDrives && currentDrives.length > 0) {
+          const childDrives = currentDrives.filter(d => !d.is_parent);
+          const countSource = childDrives.length > 0 ? childDrives : currentDrives;
+          actualCount = countSource.filter(d => d.mounted === false || d.is_mounted === false).length;
+        }
+      }
+
+      const val = String(actualCount);
+      if (!select.querySelector(`option[value="${val}"]`)) {
+        const opt = document.createElement("option");
+        opt.value = val;
+        opt.textContent = val;
+        select.appendChild(opt);
+      }
+      select.value = val;
+
+      if (checkElem) {
+        if (actualCount > 0) {
+          checkElem.classList.remove("unchecked");
+        } else {
+          checkElem.classList.add("unchecked");
+        }
+      }
+    }
+
+    function handleEjectedSelectChange(val) {
+      if (val === "0") {
+        postToHost({ action: "mount", target: "all" });
+      }
+    }
+
+    function changeSleepTimer(val) {
+      postToHost({ action: "timer", preset: val });
+    }
+
+    function triggerCheckUpdate() {
+      alert("You are running the latest version of Safe Drive Ejector (v1.0.0).");
+      postToHost({ action: "update" });
+    }
+
+    function triggerAboutModal() {
+      alert("Safe Drive Ejector (v1.0.0)\n\nNative macOS Menu Bar Utility for Safe External Disk Ejection, Idle Sleep & Auto-Active Wake.\n\nGitHub: https://github.com/siraj-bd/Safe-Drive-Ejector-macOS");
+    }
+
+    function triggerCheckLocks() {
+      startProcessingLoop("Scanning Locks", "External Drives");
+      postToHost({ action: "checkLocks" });
+    }
+
+    function handleLogoutClick(event) {
+      if (event) event.stopPropagation();
+      triggerQuitApp();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const btn = document.getElementById("logoutBtn");
+
+      // Close expanded pager button when clicking outside
+      document.addEventListener("click", () => {
+        const pager = document.getElementById("driverPagerBtn");
+        if (pager) pager.classList.remove("expanded");
+      });
+
+      // Mouse wheel scrolling for Drivers List section - snaps between the 3 stages (1-4, 4-7, 7-10) up to 10 max
+      const driversSec = document.querySelector(".drivers-section");
+      if (driversSec) {
+        driversSec.addEventListener("wheel", (e) => {
+          e.preventDefault();
+          if (e.deltaY > 6) {
+            // Scroll down: cycle 1-4 -> 4-7 -> 7-10 -> 1-4
+            if (currentDriveOffset < 4) {
+              setDriveOffset(4);
+            } else if (currentDriveOffset < 7) {
+              setDriveOffset(7);
+            } else {
+              setDriveOffset(1);
+            }
+          } else if (e.deltaY < -6) {
+            // Scroll up: cycle 7-10 -> 4-7 -> 1-4 -> 7-10
+            if (currentDriveOffset > 4) {
+              setDriveOffset(4);
+            } else if (currentDriveOffset > 1) {
+              setDriveOffset(1);
+            } else {
+              setDriveOffset(7);
+            }
+          }
+        }, { passive: false });
+      }
+
+      const soundT = document.getElementById("soundToggle");
+      if (soundT) soundT.checked = soundEnabled;
+
+      // Initialize Card Scale (persisted or default 1X)
+      const savedScale = localStorage.getItem("SafeDriveEjector_CardScale");
+      if (savedScale) {
+        changeCardScale(savedScale);
+      } else {
+        changeCardScale(1.0);
+      }
+
+      // Auto-sync real drive status from host immediately on card load
+      postToHost({ action: "requestSync" });
+    });
+
+    function triggerQuitApp() {
+      postToHost({ action: "quit" });
+    }
+
+    // Communication with Swift Host / Python
+    function postToHost(data) {
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.safeEjectBridge) {
+        window.webkit.messageHandlers.safeEjectBridge.postMessage(data);
+      } else {
+        console.log("[SafeEject Webview IPC]:", data);
+      }
+    }
+
+    // Live State Injection from Host
+    window.updateUIState = function(state) {
+      if (!state) return;
+
+      if (state.external_drives && Array.isArray(state.external_drives)) {
+        const drives = [];
+        // Sort physical external drives by ID (e.g. disk7 before disk10)
+        const sortedExternal = [...state.external_drives].sort((a, b) => {
+          return (a.id || "").localeCompare(b.id || "", undefined, { numeric: true, sensitivity: 'base' });
+        });
+
+        sortedExternal.forEach(d => {
+          const parentId = (d.id || "").replace(/^\/dev\//, '');
+          const validChildVolumes = (d.volumes || []).filter(v => v.name !== "EFI" && v.fs_type !== "Apple_APFS");
+          const childIds = validChildVolumes.map(v => (v.device_id || "").replace(/^\/dev\//, ''));
+
+          // 1. Physical parent device (Disk 1: disk7)
+          if (parentId) {
+            drives.push({
+              id: parentId,
+              name: parentId,
+              is_parent: true,
+              parent_id: parentId,
+              child_ids: childIds,
+              mounted: validChildVolumes.length > 0 ? validChildVolumes.some(v => v.is_mounted) : (d.is_mounted !== false),
+              uuid: d.primary_uuid || parentId,
+              meta: {
+                is_parent: true,
+                title: d.name || parentId,
+                location: d.location || (d.is_external ? "External" : "Internal"),
+                capacity: d.decimal_size || d.human_size || "Unknown",
+                child_count: d.child_count || (d.volumes ? d.volumes.length : childIds.length) || childIds.length,
+                type: d.media_type || "Solid state",
+              }
+            });
+          }
+
+          // 2. Child partitions in sequence (Disk 2: disk8s1, Disk 3: disk9s1...)
+          validChildVolumes.forEach(v => {
+            const childId = (v.device_id || "").replace(/^\/dev\//, '');
+            if (childId && childId !== parentId) {
+              drives.push({
+                id: childId,
+                name: childId,
+                is_parent: false,
+                parent_id: parentId,
+                child_ids: [],
+                mounted: v.is_mounted === true,
+                uuid: v.uuid || childId,
+                meta: {
+                  is_parent: false,
+                  title: v.name || childId,
+                  mount_point: v.mount_point || (v.is_mounted ? `/Volumes/${v.name || childId}` : "Not mounted"),
+                  capacity: v.decimal_size || v.human_size || "Unknown",
+                  type: v.type_desc || v.fs_type || "Volume",
+                }
+              });
+            }
+          });
+        });
+
+        currentDrives = drives;
+        renderDriveNames();
+      } else {
+        currentDrives = [];
+        renderDriveNames();
+      }
+
+      if (state.ejected_count !== undefined) {
+        syncEjectedCount(state.ejected_count);
+      } else if (state.ejectedCount !== undefined) {
+        syncEjectedCount(state.ejectedCount);
+      } else {
+        syncEjectedCount();
+      }
+
+      if (state.config) {
+        const cfg = state.config;
+        const setCb = (id, val) => {
+          const el = document.getElementById(id);
+          if (el) {
+            if (val) el.classList.remove("unchecked");
+            else el.classList.add("unchecked");
+          }
+        };
+        const deepSleepOn = (cfg.deep_sleep_mode !== undefined) ? (cfg.deep_sleep_mode === true) : (cfg.remount_on_wake === false);
+        setCb("deepSleepCheck", deepSleepOn);
+        setCb("autoAwakeCheck", !deepSleepOn);
+        updateDeepSleepTooltip(deepSleepOn);
+        setCb("startAtLoginCheck", cfg.start_at_login !== false);
+        setCb("beforeSleepCheck", cfg.eject_on_sleep !== false);
+        const notifToggle = document.getElementById("notificationToggle");
+        if (notifToggle && cfg.show_notifications !== undefined) notifToggle.checked = cfg.show_notifications !== false;
+
+        if (cfg.sleep_timer_seconds !== undefined) {
+          const timerSelect = document.getElementById("sleepTimerSelect");
+          if (timerSelect) {
+            const sec = cfg.sleep_timer_seconds;
+            if (sec <= 0) timerSelect.value = "never";
+            else if (sec === 120) timerSelect.value = "2m";
+            else if (sec === 300) timerSelect.value = "5m";
+            else if (sec === 600) timerSelect.value = "10m";
+            else if (sec === 900) timerSelect.value = "15m";
+            else if (sec === 1800) timerSelect.value = "30m";
+            else if (sec === 3600) timerSelect.value = "1h";
+            else if (sec === 7200) timerSelect.value = "2h";
+          }
+        }
+      } else if (state.sleepTimer) {
+        const timerSelect = document.getElementById("sleepTimerSelect");
+        if (timerSelect) timerSelect.value = state.sleepTimer;
+      }
+    };
+  </script>
+</body>
+</html>

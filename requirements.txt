@@ -1,0 +1,2 @@
+# Safe Drive Ejector Tool - Python Requirements
+# Native macOS Menu Bar and Core Engine require 0 external dependencies (Standard Library only).
