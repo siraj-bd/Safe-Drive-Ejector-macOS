@@ -572,7 +572,15 @@ class MacOSAdapter(PlatformAdapter):
                     message=f"Volume {clean_id} unmounted successfully.",
                 )
             else:
-                err_msg = proc.stderr.strip() or proc.stdout.strip()
+                logger.info(f"Standard unmount of {clean_id} failed, retrying with force...")
+                f_proc = subprocess.run(["diskutil", "unmount", "force", clean_id], capture_output=True, text=True, timeout=10)
+                if f_proc.returncode == 0:
+                    return EjectResult(
+                        target=clean_id,
+                        success=True,
+                        message=f"Volume {clean_id} unmounted successfully (forced).",
+                    )
+                err_msg = f_proc.stderr.strip() or f_proc.stdout.strip() or proc.stderr.strip() or proc.stdout.strip()
                 return EjectResult(
                     target=clean_id,
                     success=False,
@@ -586,7 +594,7 @@ class MacOSAdapter(PlatformAdapter):
             )
 
     def unmount_disk(self, disk_id: str) -> EjectResult:
-        """Unmount an entire disk or container using diskutil unmountDisk with timeout."""
+        """Unmount an entire disk or container using diskutil unmountDisk with timeout and force fallback."""
         clean_id = disk_id.replace("/dev/", "").strip()
         logger.info(f"Attempting to unmountDisk: {clean_id}")
         try:
@@ -598,7 +606,20 @@ class MacOSAdapter(PlatformAdapter):
                     message=f"Disk {clean_id} unmounted successfully.",
                 )
             else:
-                err_msg = proc.stderr.strip() or proc.stdout.strip()
+                # Unmount associated APFS synthesized containers first if any
+                containers = self.get_apfs_containers_for_disk(clean_id)
+                for c in containers:
+                    subprocess.run(["diskutil", "unmountDisk", "force", c], capture_output=True, timeout=10, check=False)
+
+                logger.info(f"Standard unmountDisk of {clean_id} failed, retrying with force...")
+                f_proc = subprocess.run(["diskutil", "unmountDisk", "force", clean_id], capture_output=True, text=True, timeout=10)
+                if f_proc.returncode == 0:
+                    return EjectResult(
+                        target=clean_id,
+                        success=True,
+                        message=f"Disk {clean_id} unmounted successfully (forced).",
+                    )
+                err_msg = f_proc.stderr.strip() or f_proc.stdout.strip() or proc.stderr.strip() or proc.stdout.strip()
                 return EjectResult(
                     target=clean_id,
                     success=False,
@@ -710,6 +731,34 @@ class MacOSAdapter(PlatformAdapter):
                     subprocess.run(["diskutil", "mountDisk", c], capture_output=True, text=True, timeout=15)
                 except Exception as e:
                     logger.debug(f"Failed to mount APFS container {c}: {e}")
+
+            # Fallback: if mountDisk failed or some partitions remained unmounted, attempt
+            # to mount individual data partitions directly (skipping EFI and APFS physical stores)
+            try:
+                plist_proc = subprocess.run(["diskutil", "list", "-plist", clean_id], capture_output=True, timeout=5)
+                if plist_proc.returncode == 0:
+                    p_data = plistlib.loads(plist_proc.stdout)
+                    for item in p_data.get("AllDisksAndPartitions", []):
+                        for p in item.get("Partitions", []):
+                            p_dev = p.get("DeviceIdentifier")
+                            p_type = p.get("Content", "")
+                            if p_dev and "EFI" not in p_type and "Apple_APFS" not in p_type:
+                                subprocess.run(["diskutil", "mount", p_dev], capture_output=True, timeout=10)
+            except Exception as e:
+                logger.debug(f"Partition mount fallback error for {clean_id}: {e}")
+
+            for c in containers:
+                try:
+                    c_proc = subprocess.run(["diskutil", "list", "-plist", c], capture_output=True, timeout=5)
+                    if c_proc.returncode == 0:
+                        c_data = plistlib.loads(c_proc.stdout)
+                        for item in c_data.get("AllDisksAndPartitions", []):
+                            for p in item.get("Partitions", []):
+                                p_dev = p.get("DeviceIdentifier")
+                                if p_dev:
+                                    subprocess.run(["diskutil", "mount", p_dev], capture_output=True, timeout=10)
+                except Exception as e:
+                    logger.debug(f"Container partition mount fallback error for {c}: {e}")
 
             # Verify against active mount table: even if diskutil exited non-zero solely due
             # to unmountable EFI partition (diskXs1), if data volumes are mounted it is a success.

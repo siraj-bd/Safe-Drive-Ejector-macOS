@@ -2179,7 +2179,7 @@
 
       if (isAllChecked) {
         startProcessingLoop("Mounting", "All Drivers");
-        postToHost({ action: "mount", target: "all" });
+        postToHost({ action: "mount", target: "all", drivers: targets });
       } else {
         startProcessingLoop("Mounting", targets.join(", "));
         postToHost({ action: "mount", drivers: targets });
@@ -2198,7 +2198,7 @@
 
       if (isAllChecked) {
         startProcessingLoop("Safe Unmount", "All Drivers");
-        postToHost({ action: "unmount", target: "all" });
+        postToHost({ action: "unmount", target: "all", drivers: targets });
       } else {
         startProcessingLoop("Safe Unmount", targets.join(", "));
         postToHost({ action: "unmount", drivers: targets });
@@ -2239,7 +2239,7 @@
         postToHost({ action: "ejectNow", drivers: targets });
       } else {
         startProcessingLoop("Ejecting Safely", "All External Drives");
-        postToHost({ action: "ejectNow" });
+        postToHost({ action: "ejectNow", drivers: targets });
       }
     }
 
@@ -2300,7 +2300,6 @@
     }
 
     function triggerCheckUpdate() {
-      alert("You are running the latest version of Safe Drive Ejector (v1.0.0).");
       postToHost({ action: "update" });
     }
 

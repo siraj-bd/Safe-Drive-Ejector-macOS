@@ -7,6 +7,7 @@
 [![Python](https://img.shields.io/badge/Python-3.9%2B-brightgreen.svg)](https://www.python.org/)
 [![Swift](https://img.shields.io/badge/Swift-5.5%2B-orange.svg)](https://swift.org/)
 [![Unit Tests](https://img.shields.io/badge/Tests-83%20Passing-brightgreen.svg)](#running-automated-tests)
+[![AlternativeTo](https://img.shields.io/badge/AlternativeTo-Listed-0084B4?logo=alternativeto&logoColor=white)](https://alternativeto.net/software/safe-drive-ejector/about/)
 [![GitHub Stars](https://img.shields.io/github/stars/siraj-bd/Safe-Drive-Ejector-macOS?style=social)](https://github.com/siraj-bd/Safe-Drive-Ejector-macOS)
 
 **A lightweight, premium native macOS Menu Bar utility that automatically and safely ejects external disks before system sleep, gracefully closes blocking applications, and re-mounts drives upon wake.**

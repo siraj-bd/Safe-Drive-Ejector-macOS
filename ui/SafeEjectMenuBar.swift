@@ -83,6 +83,7 @@ class SafeEjectStatusItemManager: NSObject, WKScriptMessageHandler, NSWindowDele
     var isBeforeLogoutDeepSleepRunning: Bool = false
     var isSleepingDueToIdle: Bool = false
     var lastKnownIdleSeconds: Double = 0.0
+    var lastExplicitUserActionTime: TimeInterval = 0.0
 
     override init() {
         super.init()
@@ -417,6 +418,13 @@ class SafeEjectStatusItemManager: NSObject, WKScriptMessageHandler, NSWindowDele
     }
 
     func checkIdleState() {
+        let now = Date().timeIntervalSince1970
+        if now - lastExplicitUserActionTime < 10.0 {
+            // User recently performed an explicit action (e.g. Unmount/Mount).
+            // Enforce a 10s cooldown to prevent cursor movement from triggering touch-wake.
+            return
+        }
+
         let idleSec = CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: CGEventType(rawValue: ~0)!)
         lastKnownIdleSeconds = idleSec
 
@@ -776,6 +784,8 @@ class SafeEjectStatusItemManager: NSObject, WKScriptMessageHandler, NSWindowDele
             if let urlStr = body["url"] as? String, let url = URL(string: urlStr) {
                 NSWorkspace.shared.open(url)
             }
+        case "update":
+            checkForUpdates()
         case "requestSync":
             syncRealDriveState(force: true)
         case "quit":
@@ -783,6 +793,101 @@ class SafeEjectStatusItemManager: NSObject, WKScriptMessageHandler, NSWindowDele
         default:
             break
         }
+    }
+
+    func checkForUpdates() {
+        let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+        guard let url = URL(string: "https://api.github.com/repos/siraj-bd/Safe-Drive-Ejector-macOS/releases/latest") else { return }
+
+        var request = URLRequest(url: url)
+        request.setValue("application/vnd.github.v3+json", forHTTPHeaderField: "Accept")
+        request.setValue("Safe-Drive-Ejector-macOS", forHTTPHeaderField: "User-Agent")
+        request.timeoutInterval = 10.0
+
+        let task = URLSession.shared.dataTask(with: request) { [weak self] (data, response, error) in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+
+                if let error = error {
+                    let alert = NSAlert()
+                    alert.messageText = "Safe Drive Ejector: Update Check"
+                    alert.informativeText = "Unable to check for updates: \(error.localizedDescription)\n\nPlease verify your internet connection or check releases on GitHub."
+                    alert.addButton(withTitle: "Visit GitHub")
+                    alert.addButton(withTitle: "OK")
+                    if alert.runModal() == .alertFirstButtonReturn {
+                        if let ghUrl = URL(string: "https://github.com/siraj-bd/Safe-Drive-Ejector-macOS/releases") {
+                            NSWorkspace.shared.open(ghUrl)
+                        }
+                    }
+                    return
+                }
+
+                guard let data = data,
+                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let tagName = json["tag_name"] as? String else {
+                    let alert = NSAlert()
+                    alert.messageText = "Safe Drive Ejector: Update Check"
+                    alert.informativeText = "Could not parse update response from GitHub."
+                    alert.addButton(withTitle: "OK")
+                    alert.runModal()
+                    return
+                }
+
+                let releaseURL = (json["html_url"] as? String).flatMap { URL(string: $0) }
+                var dmgDownloadURL: URL? = nil
+
+                if let assets = json["assets"] as? [[String: Any]] {
+                    for asset in assets {
+                        if let name = asset["name"] as? String, name.hasSuffix(".dmg"),
+                           let dlStr = asset["browser_download_url"] as? String {
+                            dmgDownloadURL = URL(string: dlStr)
+                            break
+                        }
+                    }
+                }
+
+                let latestVerStr = tagName.trimmingCharacters(in: CharacterSet(charactersIn: "vV"))
+                let isNewer = self.isVersion(latestVerStr, newerThan: currentVersion)
+
+                let alert = NSAlert()
+                if isNewer {
+                    alert.messageText = "Update Available (v\(latestVerStr))"
+                    alert.informativeText = "A new version of Safe Drive Ejector is available!\n\nCurrent Version: v\(currentVersion)\nLatest Version: v\(latestVerStr)\n\nWould you like to download the update now?"
+                    alert.addButton(withTitle: "Download Now (DMG)")
+                    alert.addButton(withTitle: "View Release Notes")
+                    alert.addButton(withTitle: "Later")
+                    let res = alert.runModal()
+                    if res == .alertFirstButtonReturn {
+                        if let dl = dmgDownloadURL ?? releaseURL {
+                            NSWorkspace.shared.open(dl)
+                        }
+                    } else if res == .alertSecondButtonReturn {
+                        if let rUrl = releaseURL {
+                            NSWorkspace.shared.open(rUrl)
+                        }
+                    }
+                } else {
+                    alert.messageText = "You are up to date!"
+                    alert.informativeText = "Safe Drive Ejector v\(currentVersion) is currently the latest version."
+                    alert.addButton(withTitle: "OK")
+                    alert.runModal()
+                }
+            }
+        }
+        task.resume()
+    }
+
+    private func isVersion(_ v1: String, newerThan v2: String) -> Bool {
+        let p1 = v1.components(separatedBy: ".").compactMap { Int($0) }
+        let p2 = v2.components(separatedBy: ".").compactMap { Int($0) }
+        let maxLen = max(p1.count, p2.count)
+        for i in 0..<maxLen {
+            let num1 = i < p1.count ? p1[i] : 0
+            let num2 = i < p2.count ? p2[i] : 0
+            if num1 > num2 { return true }
+            if num1 < num2 { return false }
+        }
+        return false
     }
 
     // MARK: - WKUIDelegate (Opens external links in macOS default browser)
@@ -925,8 +1030,11 @@ class SafeEjectStatusItemManager: NSObject, WKScriptMessageHandler, NSWindowDele
         let targetParam = args.dropFirst().joined(separator: ", ")
 
         // Only explicit user commands from the UI card (not background idle sleep) clear isSleepingDueToIdle
-        if !isBackground && (cmd == "eject" || cmd == "deep-sleep" || cmd == "eject-now" || cmd == "remount" || cmd == "remount-all") {
-            self.isSleepingDueToIdle = false
+        if !isBackground {
+            self.lastExplicitUserActionTime = Date().timeIntervalSince1970
+            if (cmd == "eject" || cmd == "deep-sleep" || cmd == "eject-now" || cmd == "remount" || cmd == "remount-all") {
+                self.isSleepingDueToIdle = false
+            }
         }
 
         self.isOperationInProgress = true

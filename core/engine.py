@@ -100,9 +100,22 @@ class SafeEjectEngine:
         results: List[RemountResult] = []
 
         if not drive_ids and not volume_ids:
-            logger.info("No recorded sleeping drives/volumes found in state. Skipping remount.")
-            self.status_message = "No sleeping drives to restore"
-            return []
+            if only_if_recorded:
+                logger.info("No recorded sleeping drives/volumes found in state. Skipping remount.")
+                self.status_message = "No sleeping drives to restore"
+                return []
+            # When user explicitly requests mount-all, mount all unmounted connected external volumes!
+            logger.info("No state records found; querying all connected external drives to mount unmounted volumes...")
+            all_ext = self.volume_manager.get_all_external_drives()
+            for d in all_ext:
+                for v in d.volumes:
+                    if v.name != "EFI" and v.fs_type != "Apple_APFS" and not v.is_mounted:
+                        volume_ids.append(v.device_id)
+                if not d.volumes:
+                    drive_ids.append(d.id)
+            if not drive_ids and not volume_ids:
+                self.status_message = "All external drives are already mounted"
+                return []
 
         # If only_if_recorded is True (auto-wake, touch-wake, system-wake):
         # EXCLUDE any drive or volume belonging to an explicit deep-sleep parent!
@@ -160,7 +173,8 @@ class SafeEjectEngine:
         """Manual unmount/eject of a single drive or volume."""
         res = self.volume_manager.unmount_target(target)
         if res.success:
-            self.idle_monitor.mark_drive_asleep(target)
+            # Explicit manual unmount must NEVER enter touch-wake queue!
+            self.idle_monitor.mark_drive_awake(target)
             self.volume_manager.play_sound(self.config.success_sound)
         else:
             self.volume_manager.play_sound(self.config.failure_sound)

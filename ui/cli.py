@@ -264,12 +264,15 @@ def cmd_remount_all(engine: SafeEjectEngine, args):
     drive_ids = state.get("drive_ids", [])
     volume_ids = state.get("volume_identifiers", [])
 
-    if not drive_ids and not volume_ids:
+    if only_recorded and not drive_ids and not volume_ids:
         print("\nNo recorded sleeping drives/volumes found in state. Skipping remount.\n")
         return
 
     item_count = len(drive_ids) + len(volume_ids)
-    print(f"\nRemounting {item_count} previously sleeping drive/volume item(s)...")
+    if item_count > 0:
+        print(f"\nRemounting {item_count} previously sleeping drive/volume item(s)...")
+    else:
+        print("\nScanning and mounting all connected external unmounted drives/volumes...")
     results = engine.remount_all_ejected(only_if_recorded=only_recorded)
     for res in results:
         icon = _status_icon(res.success)
