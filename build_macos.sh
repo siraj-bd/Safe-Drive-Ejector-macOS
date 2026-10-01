@@ -109,7 +109,7 @@ fi
 # MODE: UNIVERSAL BUILD (Apple Silicon + Intel)
 # ==============================================================================
 if [ "$MODE" = "universal" ]; then
-    DMG_NAME="${DMG_NAME:-SafeDriveEjector-1.1.0-macOS-Universal.dmg}"
+    DMG_NAME="${DMG_NAME:-SafeDriveEjector-1.2.0-macOS-Universal.dmg}"
     DMG_OUTPUT="$DIST_DIR/$DMG_NAME"
 
     echo "======================================================="
@@ -217,9 +217,9 @@ EOF
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
+    <string>1.2.0</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>2</string>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>LSUIElement</key>
@@ -312,7 +312,7 @@ fi
 # ==============================================================================
 # MODE: SINGLE ARCHITECTURE STANDALONE BUILD (Fallback)
 # ==============================================================================
-DMG_NAME="${DMG_NAME:-SafeDriveEjector-1.1.0-macOS-${TARGET_ARCH}.dmg}"
+DMG_NAME="${DMG_NAME:-SafeDriveEjector-1.2.0-macOS-${TARGET_ARCH}.dmg}"
 DMG_OUTPUT="$DIST_DIR/$DMG_NAME"
 
 echo "======================================================="
@@ -367,9 +367,9 @@ cat << 'EOF' > "$APP_BUNDLE/Contents/Info.plist"
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
+    <string>1.2.0</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>2</string>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>LSUIElement</key>

@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="safe-drive-ejector",
-    version="1.0.0",
+    version="1.2.0",
     description="Native macOS External Disk Safe Ejector & Auto-Remounter (Universal 2: Apple Silicon & Intel)",
     author="Siraj",
     url="https://github.com/siraj-bd/Safe-Drive-Ejector-macOS",

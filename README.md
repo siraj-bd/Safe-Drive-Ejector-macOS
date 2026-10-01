@@ -179,7 +179,7 @@ brew upgrade --cask safe-drive-ejector
 ### Option B: Pre-Built Standalone Release (DMG)
 
 Download the latest package from [GitHub Releases](https://github.com/siraj-bd/Safe-Drive-Ejector-macOS/releases):
-- **macOS Universal (Apple Silicon M1/M2/M3/M4 & Intel)**: `SafeDriveEjector-1.0.0-macOS-Universal.dmg`
+- **macOS Universal (Apple Silicon M1/M2/M3/M4 & Intel)**: `SafeDriveEjector-1.2.0-macOS-Universal.dmg`
 
 ---
 
