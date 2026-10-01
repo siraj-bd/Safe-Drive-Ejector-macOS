@@ -476,6 +476,9 @@ class SafeEjectStatusItemManager: NSObject, WKScriptMessageHandler, NSWindowDele
 
         // Start real-time drive status polling while panel is visible
         startLivePolling()
+        if !isOperationInProgress {
+            webView.evaluateJavaScript("if(window.resetIdleStatus){ window.resetIdleStatus(); }", completionHandler: nil)
+        }
 
         // Close panel when user clicks outside
         if globalClickMonitor == nil {

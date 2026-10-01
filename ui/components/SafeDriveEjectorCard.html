@@ -313,7 +313,7 @@
 
     /* Bottom Row: Animated Icon on Left, Two Text lines on Right (Hidden by default, active on unmount/eject) */
     .status-body-row {
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: center;
       gap: 7px;
@@ -328,6 +328,7 @@
     }
 
     .status-body-row.active {
+      display: flex;
       opacity: 1;
       pointer-events: auto;
     }
@@ -339,6 +340,7 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      position: relative;
     }
 
     .loader-scaler {
@@ -350,12 +352,41 @@
       filter: drop-shadow(0 0 2px rgba(255, 25, 25, 0.6));
     }
 
+    .status-body-row.success .loader-scaler {
+      display: none !important;
+    }
+
+    .status-success-icon {
+      width: 11px;
+      height: 11px;
+      stroke: #39ff14;
+      stroke-width: 2.8;
+      fill: none;
+      display: none;
+      filter: drop-shadow(0 0 3px rgba(57, 255, 20, 0.6));
+      animation: scaleInCheck 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .status-body-row.success .status-success-icon {
+      display: block !important;
+    }
+
+    @keyframes scaleInCheck {
+      0% { transform: scale(0.6); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
     .loader {
       width: 44px;
       aspect-ratio: 1.154;
       position: relative;
       background: conic-gradient(from 120deg at 50% 64%, #0000, #ff1919 1deg 120deg, #0000 121deg);
       animation: l27-0 1.5s infinite cubic-bezier(0.3, 1, 0, 1);
+      animation-play-state: paused;
+    }
+
+    .status-body-row.active.is-running .loader {
+      animation-play-state: running;
     }
 
     .loader:before,
@@ -366,6 +397,12 @@
       background: inherit;
       transform-origin: 50% 66%;
       animation: l27-1 1.5s infinite;
+      animation-play-state: paused;
+    }
+
+    .status-body-row.active.is-running .loader:before,
+    .status-body-row.active.is-running .loader:after {
+      animation-play-state: running;
     }
 
     .loader:after {
@@ -1260,14 +1297,17 @@
         </div>
       </div>
       <div class="status-body-row" id="statusBodyRow">
-        <div class="status-loader-wrap" title="System Processing">
-          <div class="loader-scaler">
-            <div class="loader"></div>
+        <div class="status-loader-wrap" title="System Status">
+          <div class="loader-scaler" id="statusLoaderScaler">
+            <div class="loader" id="statusLoader"></div>
           </div>
+          <svg class="status-success-icon" id="statusSuccessIcon" viewBox="0 0 24 24">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
         </div>
         <div class="status-text-group">
-          <div class="status-processing-text" id="statusProcessingText">Processing..........</div>
-          <div class="status-mode-text" id="statusModeText">Auto-Complete Enabled</div>
+          <div class="status-processing-text" id="statusProcessingText">Ready</div>
+          <div class="status-mode-text" id="statusModeText">System Idle</div>
         </div>
       </div>
     </div>
@@ -1706,6 +1746,25 @@
     let processingInterval = null;
     let isProcessingActive = false;
 
+    function resetStatusRow() {
+      const bodyRow = document.getElementById("statusBodyRow");
+      const procElem = document.getElementById("statusProcessingText");
+      const modeElem = document.getElementById("statusModeText");
+      if (bodyRow) {
+        bodyRow.classList.remove("active", "is-running", "success", "error");
+      }
+      if (procElem) procElem.textContent = "Ready";
+      if (modeElem) modeElem.textContent = "System Idle";
+    }
+
+    window.resetIdleStatus = function() {
+      if (!isProcessingActive) {
+        clearTimeout(statusHoldTimer);
+        statusHoldTimer = null;
+        resetStatusRow();
+      }
+    };
+
     function startProcessingLoop(actionName = "Processing", targetLabel = "") {
       const bodyRow = document.getElementById("statusBodyRow");
       const procElem = document.getElementById("statusProcessingText");
@@ -1713,8 +1772,10 @@
       if (!bodyRow || !procElem || !modeElem) return;
 
       isProcessingActive = true;
-      bodyRow.classList.add("active");
+      bodyRow.classList.remove("success", "error");
+      bodyRow.classList.add("active", "is-running");
       clearTimeout(statusHoldTimer);
+      statusHoldTimer = null;
       if (processingInterval) clearInterval(processingInterval);
 
       let step = 0;
@@ -1763,15 +1824,26 @@
       if (procElem) procElem.textContent = finalMsg;
       if (modeElem) modeElem.textContent = subMsg;
 
+      if (bodyRow) {
+        bodyRow.classList.remove("is-running");
+        if (isError) {
+          bodyRow.classList.add("error");
+          bodyRow.classList.remove("success");
+        } else {
+          bodyRow.classList.add("success");
+          bodyRow.classList.remove("error");
+        }
+      }
+
       playAudioFeedback(isError ? "failure" : "success");
       syncEjectedCount();
 
       clearTimeout(statusHoldTimer);
-      const holdTime = isError ? 5000 : 2000;
+      const holdTime = isError ? 4000 : 2500;
       statusHoldTimer = setTimeout(() => {
-        if (bodyRow) bodyRow.classList.remove("active");
-        if (procElem) procElem.textContent = isError ? "Action Needed" : "Ready";
-        if (modeElem) modeElem.textContent = isError ? "Check Busy Files" : "System Idle";
+        if (!isProcessingActive) {
+          resetStatusRow();
+        }
       }, holdTime);
     }
 
@@ -2492,6 +2564,10 @@
       } else if (state.sleepTimer) {
         const timerSelect = document.getElementById("sleepTimerSelect");
         if (timerSelect) timerSelect.value = state.sleepTimer;
+      }
+
+      if (!isProcessingActive && !statusHoldTimer) {
+        resetStatusRow();
       }
     };
   </script>
